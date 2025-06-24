@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streetszapa - Catálogo (iOS Safe)</title>
+    <title>Streetszapa - Catálogo por Talle</title>
     <style>
-        /* --- El CSS no cambia, puedes usar el que ya tenías --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
         :root {
             --background-color: #121212; --card-background: #1E1E1E; --text-color: #FFFFFF;
@@ -20,17 +19,35 @@
         .talle-section { margin-bottom: 40px; }
         .talle-section-header { font-size: 2.2rem; font-weight: 700; color: var(--accent-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 25px; }
         .productos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
-        .zapatilla-card { background-color: var(--card-background); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; text-align: center; }
+        .zapatilla-card { background-color: var(--card-background); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; text-align: center; display: flex; flex-direction: column; }
         .zapatilla-card img { width: 100%; height: 250px; object-fit: cover; }
-        .zapatilla-card h2 { font-size: 1.3rem; margin: 15px 10px; font-weight: 600; }
-        .zapatilla-card .precio { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin-bottom: 15px; }
-        .add-cart-btn { background-color: var(--accent-color); color: #000; font-weight: 600; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: calc(100% - 30px); margin: 0 15px 15px 15px; font-size: 1rem; }
-        #carrito-container { width: 100%; max-width: 100%; position: static; margin-top: 30px; background-color: var(--card-background); border: 1px solid var(--border-color); border-radius: 8px; padding: 25px; }
-        /* ... resto de estilos sin cambios ... */
+        .card-content { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
+        .card-content h2 { font-size: 1.3rem; font-weight: 600; flex-grow: 1; }
+        .card-content .precio { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin: 10px 0 15px 0; }
+        .add-cart-btn { background-color: var(--accent-color); color: #000; font-weight: 600; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; margin-top: auto; }
+        #carrito-container { width: 100%; max-width: 100%; position: static; margin-top: 30px; background-color: var(--card-background); border: 1px solid var(--border-color); border-radius: 8px; padding: 25px; box-sizing: border-box; }
+        #carrito-container h2 { text-align: center; margin-bottom: 20px; color: var(--accent-color); }
+        #carrito-items { list-style: none; padding: 0; margin: 0; }
+        .carrito-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid var(--border-color); }
+        .item-info span { display: block; } .item-info .nombre { font-weight: 600; } .item-info .talle { font-size: 0.9em; color: var(--text-secondary-color); }
+        .item-precio { font-weight: bold; }
+        .item-cantidad-control { display: flex; align-items: center; gap: 8px; }
+        .qty-btn { background-color: var(--accent-color); color: #000; border: none; width: 25px; height: 25px; border-radius: 50%; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .item-cantidad { font-weight: 600; margin: 0 5px; }
+        #carrito-total { margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--accent-color); text-align: right; font-size: 1.6em; font-weight: bold; }
+        .empty-cart { text-align: center; color: var(--text-secondary-color); padding: 30px 0; }
+        #realizar-pedido-btn { width: 100%; padding: 15px; margin-top: 20px; background-color: var(--whatsapp-green); color: white; border: none; border-radius: 8px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+        #realizar-pedido-btn:hover { background-color: #1EBE57; }
+        #realizar-pedido-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; }
+        footer { background: #1E1E1E; text-align: center; padding: 25px; margin-top: 40px; border-top: 1px solid var(--border-color); }
+        .social-icons a { margin: 0 15px; } .social-icons img { width: 30px; transition: transform 0.2s; }
+        .social-icons a:hover img { transform: scale(1.1); }
     </style>
 </head>
 <body>
-    <header><img id="logo-streetszapa" src="https://i.imgur.com/GZ5Z4d7.png" alt="Logo de Streetszapa"></header>
+    <header>
+        <img id="logo-streetszapa" src="https://i.imgur.com/G5Zua4s.png" alt="Logo de Streetszapa">
+    </header>
     <div class="tienda-container">
         <main id="catalogo-container"><p>Cargando catálogo por talle...</p></main>
         <aside id="carrito-container">
@@ -40,86 +57,188 @@
             <button id="realizar-pedido-btn" disabled>Hacer Pedido por WhatsApp</button>
         </aside>
     </div>
+    <footer>
+        <p><strong>Dirección:</strong> Lizandro de la Torre 938, San Salvador de Jujuy</p>
+        <p><strong>Teléfono:</strong> 388 468-9497</p>
+        <div class="social-icons">
+            <a href="https://www.facebook.com/telasjujuy" target="_blank" rel="noopener noreferrer"><img src="https://i.imgur.com/8p5z5YF.png" alt="Facebook"></a>
+            <a href="https://www.instagram.com/streetszapas/" target="_blank" rel="noopener noreferrer"><img src="https://i.imgur.com/vHAPDoE.png" alt="Instagram"></a>
+            <a href="#" target="_blank" rel="noopener noreferrer"><img src="https://i.imgur.com/11sFC1g.png" alt="TikTok"></a>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Envolvemos todo en un bloque try/catch para capturar cualquier error
-        try {
+        // Envolvemos todo en una función autoejecutable para proteger el código
+        (function() {
             var SUPABASE_URL = 'https://ilauxmesrvylqtluidpv.supabase.co';
             var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
             var supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            var numeroWhatsApp = '5493884689497';
             
+            var carrito = [];
+            var productos = {}; // Usaremos un objeto para acceder a los productos por ID más fácil
+
             var catalogoContainer = document.getElementById('catalogo-container');
+            var carritoItemsContainer = document.getElementById('carrito-items');
+            var carritoTotalEl = document.getElementById('carrito-total');
+            var botonPedido = document.getElementById('realizar-pedido-btn');
 
-            // La función principal ahora es 'async' para usar 'await'
-            async function iniciarCatalogo() {
-                // Pedimos el inventario a Supabase
-                var response = await supabaseClient
-                    .from('inventario')
-                    .select('talle, stock, modelos(*, marcas(*))')
-                    .gt('stock', 0);
-
-                if (response.error) {
-                    // Si Supabase devuelve un error, lo mostramos
-                    throw response.error;
-                }
-
-                var inventario = response.data;
-                
-                // Agrupamos los productos por talle
-                var zapatillasPorTalle = inventario.reduce(function(acc, item) {
-                    var talle = item.talle;
-                    if (!acc[talle]) {
-                        acc[talle] = [];
-                    }
-                    if (item.modelos) { // Verificamos que el modelo no sea nulo
-                       acc[talle].push(item.modelos);
-                    }
-                    return acc;
-                }, {});
-
-                // Limpiamos el contenedor
-                catalogoContainer.innerHTML = '';
-                var tallesOrdenados = Object.keys(zapatillasPorTalle).sort();
-
-                if (tallesOrdenados.length === 0) {
-                     catalogoContainer.innerHTML = '<p>No hay productos con stock disponible en este momento.</p>';
-                     return;
-                }
-
-                // Pintamos las secciones en la página
-                tallesOrdenados.forEach(function(talle) {
-                    var productosEnEsteTalle = zapatillasPorTalle[talle];
-                    var seccion = document.createElement('section');
-                    seccion.className = 'talle-section';
-                    
-                    var productosHTML = '';
-                    productosEnEsteTalle.forEach(function(zapatilla) {
-                        var imageUrl = SUPABASE_URL + '/storage/v1/object/public/fotos-zapatillas/' + zapatilla.foto_url;
-                        productosHTML += '<div class="zapatilla-card">' +
-                                         '<img src="' + imageUrl + '" alt="' + zapatilla.nombre + '">' +
-                                         '<h2>' + zapatilla.nombre + '</h2>' +
-                                         '<p class="precio">$' + zapatilla.precio.toLocaleString('es-AR') + '</p>' +
-                                         '<button class="add-cart-btn" data-id="' + zapatilla.id + '" data-talle="' + talle + '">Añadir al Carrito</button>' +
-                                         '</div>';
+            function renderizarCarrito() {
+                if (carrito.length === 0) {
+                    carritoItemsContainer.innerHTML = '<p class="empty-cart">Tu carrito está vacío.</p>';
+                    botonPedido.disabled = true;
+                } else {
+                    carritoItemsContainer.innerHTML = '';
+                    carrito.forEach(function(item) {
+                        var li = document.createElement('li');
+                        li.className = 'carrito-item';
+                        li.innerHTML = '<div class="item-info">' +
+                                     '<span class="nombre">' + item.nombre + '</span>' +
+                                     '<span class="talle">Talle: ' + item.talle + '</span></div>' +
+                                     '<div class="item-cantidad-control">' +
+                                     '<button class="qty-btn minus" data-id="' + item.id + '" data-talle="' + item.talle + '">-</button>' +
+                                     '<span class="item-cantidad">' + item.cantidad + '</span>' +
+                                     '<button class="qty-btn plus" data-id="' + item.id + '" data-talle="' + item.talle + '">+</button></div>' +
+                                     '<span class="item-precio">$' + (item.precio * item.cantidad).toLocaleString('es-AR') + '</span>';
+                        carritoItemsContainer.appendChild(li);
                     });
+                    botonPedido.disabled = false;
+                }
+                var total = carrito.reduce(function(sum, item) { return sum + (item.precio * item.cantidad); }, 0);
+                carritoTotalEl.textContent = 'Total: $' + total.toLocaleString('es-AR');
+            }
+            
+            function getStock(productoId, talle) {
+                var producto = productos[productoId];
+                if (!producto) return 0;
+                var inventarioItem = producto.inventario.find(function(i) { return i.talle === talle; });
+                return inventarioItem ? inventarioItem.stock : 0;
+            }
+
+            function agregarAlCarrito(productoId, talleSeleccionado) {
+                var stockDisponible = getStock(productoId, talleSeleccionado);
+                var itemExistente = carrito.find(function(item) { return item.id === productoId && item.talle === talleSeleccionado; });
+
+                if (itemExistente) {
+                    if (itemExistente.cantidad < stockDisponible) {
+                        itemExistente.cantidad++;
+                    } else {
+                        alert('¡Stock máximo alcanzado para este producto!');
+                    }
+                } else {
+                    if (stockDisponible > 0) {
+                        var productoData = productos[productoId];
+                        carrito.push({ id: productoData.id, nombre: productoData.nombre, precio: productoData.precio, talle: talleSeleccionado, cantidad: 1 });
+                    }
+                }
+                renderizarCarrito();
+            }
+
+            function ajustarCantidad(productoId, talle, cambio) {
+                var itemIndex = -1;
+                for (var i = 0; i < carrito.length; i++) {
+                    if (carrito[i].id === productoId && carrito[i].talle === talle) {
+                        itemIndex = i;
+                        break;
+                    }
+                }
+                if (itemIndex === -1) return;
+                
+                var itemEnCarrito = carrito[itemIndex];
+                var stockDisponible = getStock(productoId, talle);
+                
+                var nuevaCantidad = itemEnCarrito.cantidad + cambio;
+
+                if (nuevaCantidad > stockDisponible) {
+                    alert('¡Stock máximo alcanzado!');
+                    return;
+                }
+
+                if (nuevaCantidad <= 0) {
+                    carrito.splice(itemIndex, 1);
+                } else {
+                    itemEnCarrito.cantidad = nuevaCantidad;
+                }
+                renderizarCarrito();
+            }
+
+            async function iniciarCatalogo() {
+                try {
+                    var response = await supabaseClient.from('inventario').select('talle, stock, modelos(*, marcas(*))').gt('stock', 0);
+                    if (response.error) throw response.error;
                     
-                    seccion.innerHTML = '<h2 class="talle-section-header">Talle ' + talle + '</h2><div class="productos-grid">' + productosHTML + '</div>';
-                    catalogoContainer.appendChild(seccion);
+                    var inventario = response.data;
+                    var zapatillasPorTalle = inventario.reduce(function(acc, item) {
+                        if (item.modelos) {
+                            var talle = item.talle;
+                            if (!acc[talle]) acc[talle] = [];
+                            var modeloConStock = item.modelos;
+                            modeloConStock.stockDeEsteTalle = item.stock;
+                            acc[talle].push(modeloConStock);
+                            productos[item.modelos.id] = item.modelos;
+                        }
+                        return acc;
+                    }, {});
+
+                    catalogoContainer.innerHTML = '';
+                    var tallesOrdenados = Object.keys(zapatillasPorTalle).sort(function(a, b) { return parseFloat(a) - parseFloat(b); });
+
+                    if (tallesOrdenados.length === 0) {
+                         catalogoContainer.innerHTML = '<p>No hay productos con stock disponible en este momento.</p>';
+                         return;
+                    }
+
+                    tallesOrdenados.forEach(function(talle) {
+                        var productosEnEsteTalle = zapatillasPorTalle[talle];
+                        var seccion = document.createElement('section');
+                        seccion.className = 'talle-section';
+                        var productosHTML = '';
+                        productosEnEsteTalle.forEach(function(zapatilla) {
+                            var imageUrl = SUPABASE_URL + '/storage/v1/object/public/fotos-zapatillas/' + zapatilla.foto_url;
+                            productosHTML += '<div class="zapatilla-card"><img src="' + imageUrl + '" alt="' + zapatilla.nombre + '"><div class="card-content"><h2>' + zapatilla.nombre + '</h2><p class="precio">$' + zapatilla.precio.toLocaleString('es-AR') + '</p><button class="add-cart-btn" data-id="' + zapatilla.id + '" data-talle="' + talle + '">Añadir al Carrito</button></div></div>';
+                        });
+                        seccion.innerHTML = '<h2 class="talle-section-header">Talle ' + talle + '</h2><div class="productos-grid">' + productosHTML + '</div>';
+                        catalogoContainer.appendChild(seccion);
+                    });
+                } catch (e) {
+                    catalogoContainer.innerHTML = '<h2>Ha ocurrido un error al cargar la página:</h2><p style="color:red;">' + e.message + '</p>';
+                    console.error(e);
+                }
+            }
+
+            catalogoContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('add-cart-btn')) {
+                    agregarAlCarrito(parseInt(e.target.dataset.id), e.target.dataset.talle);
+                }
+            });
+
+            carritoItemsContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('qty-btn')) {
+                    var id = parseInt(e.target.dataset.id);
+                    var talle = e.target.dataset.talle;
+                    var cambio = e.target.classList.contains('plus') ? 1 : -1;
+                    ajustarCantidad(id, talle, cambio);
+                }
+            });
+
+            botonPedido.addEventListener('click', function() {
+                if (carrito.length === 0) return;
+                var mensaje = '¡Hola Streetszapa! 👟 Quiero consultar por este pedido:\n\n';
+                carrito.forEach(function(item) {
+                    mensaje += '*Producto:* ' + item.nombre + '\n*Talle:* ' + item.talle + '\n*Cantidad:* ' + item.cantidad + '\n*Precio unitario:* $' + item.precio.toLocaleString('es-AR') + '\n--------------------------------\n';
                 });
-            }
+                var total = carrito.reduce(function(sum, item) { return sum + (item.precio * item.cantidad); }, 0);
+                mensaje += '\n*TOTAL DEL PEDIDO: $' + total.toLocaleString('es-AR') + '*';
+                window.open('https://api.whatsapp.com/send?phone=' + numeroWhatsApp + '&text=' + encodeURIComponent(mensaje), '_blank');
+            });
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                iniciarCatalogo();
+                renderizarCarrito();
+            });
 
-            // Llamamos a la función principal cuando el DOM esté listo
-            document.addEventListener('DOMContentLoaded', iniciarCatalogo);
-
-        } catch (e) {
-            // SI ALGO FALLA, MOSTRAMOS EL ERROR EN PANTALLA
-            var catalogoContainer = document.getElementById('catalogo-container');
-            if (catalogoContainer) {
-                catalogoContainer.innerHTML = '<h2>Ha ocurrido un error al cargar la página:</h2><p style="color:red;">' + e.message + '</p>';
-            }
-            console.error(e); // También lo mostramos en la consola para más detalles
-        }
+        })(); // Fin de la función autoejecutable
     </script>
 </body>
 </html>
