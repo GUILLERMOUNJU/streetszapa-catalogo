@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streetszapa - Catálogo (iOS Safe)</title>
+    <style>
+        /* --- El CSS no cambia, puedes usar el que ya tenías --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        :root {
+            --background-color: #121212; --card-background: #1E1E1E; --text-color: #FFFFFF;
+            --text-secondary-color: #B3B3B3; --accent-color: #FFD700; --whatsapp-green: #25D366;
+            --shadow: 0 4px 15px rgba(0,0,0,0.2); --border-color: #333333;
+        }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); margin: 0; padding: 20px; color: var(--text-color); }
+        header { padding: 20px 0; text-align: center; margin-bottom: 20px; }
+        #logo-streetszapa { max-width: 120px; }
+        .tienda-container { display: flex; flex-direction: column; max-width: 900px; margin: 20px auto; }
+        #catalogo-container { flex-grow: 1; }
+        .talle-section { margin-bottom: 40px; }
+        .talle-section-header { font-size: 2.2rem; font-weight: 700; color: var(--accent-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 25px; }
+        .productos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .zapatilla-card { background-color: var(--card-background); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; text-align: center; }
+        .zapatilla-card img { width: 100%; height: 250px; object-fit: cover; }
+        .zapatilla-card h2 { font-size: 1.3rem; margin: 15px 10px; font-weight: 600; }
+        .zapatilla-card .precio { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin-bottom: 15px; }
+        .add-cart-btn { background-color: var(--accent-color); color: #000; font-weight: 600; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: calc(100% - 30px); margin: 0 15px 15px 15px; font-size: 1rem; }
+        #carrito-container { width: 100%; max-width: 100%; position: static; margin-top: 30px; background-color: var(--card-background); border: 1px solid var(--border-color); border-radius: 8px; padding: 25px; }
+        /* ... resto de estilos sin cambios ... */
+    </style>
+</head>
+<body>
+    <header><img id="logo-streetszapa" src="https://i.imgur.com/GZ5Z4d7.png" alt="Logo de Streetszapa"></header>
+    <div class="tienda-container">
+        <main id="catalogo-container"><p>Cargando catálogo por talle...</p></main>
+        <aside id="carrito-container">
+            <h2>Tu Pedido</h2>
+            <ul id="carrito-items"><p class="empty-cart">Tu carrito está vacío.</p></ul>
+            <div id="carrito-total">Total: $0</div>
+            <button id="realizar-pedido-btn" disabled>Hacer Pedido por WhatsApp</button>
+        </aside>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Envolvemos todo en un bloque try/catch para capturar cualquier error
+        try {
+            var SUPABASE_URL = 'https://ilauxmesrvylqtluidpv.supabase.co';
+            var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
+            var supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            var catalogoContainer = document.getElementById('catalogo-container');
+
+            // La función principal ahora es 'async' para usar 'await'
+            async function iniciarCatalogo() {
+                // Pedimos el inventario a Supabase
+                var response = await supabaseClient
+                    .from('inventario')
+                    .select('talle, stock, modelos(*, marcas(*))')
+                    .gt('stock', 0);
+
+                if (response.error) {
+                    // Si Supabase devuelve un error, lo mostramos
+                    throw response.error;
+                }
+
+                var inventario = response.data;
+                
+                // Agrupamos los productos por talle
+                var zapatillasPorTalle = inventario.reduce(function(acc, item) {
+                    var talle = item.talle;
+                    if (!acc[talle]) {
+                        acc[talle] = [];
+                    }
+                    if (item.modelos) { // Verificamos que el modelo no sea nulo
+                       acc[talle].push(item.modelos);
+                    }
+                    return acc;
+                }, {});
+
+                // Limpiamos el contenedor
+                catalogoContainer.innerHTML = '';
+                var tallesOrdenados = Object.keys(zapatillasPorTalle).sort();
+
+                if (tallesOrdenados.length === 0) {
+                     catalogoContainer.innerHTML = '<p>No hay productos con stock disponible en este momento.</p>';
+                     return;
+                }
+
+                // Pintamos las secciones en la página
+                tallesOrdenados.forEach(function(talle) {
+                    var productosEnEsteTalle = zapatillasPorTalle[talle];
+                    var seccion = document.createElement('section');
+                    seccion.className = 'talle-section';
+                    
+                    var productosHTML = '';
+                    productosEnEsteTalle.forEach(function(zapatilla) {
+                        var imageUrl = SUPABASE_URL + '/storage/v1/object/public/fotos-zapatillas/' + zapatilla.foto_url;
+                        productosHTML += '<div class="zapatilla-card">' +
+                                         '<img src="' + imageUrl + '" alt="' + zapatilla.nombre + '">' +
+                                         '<h2>' + zapatilla.nombre + '</h2>' +
+                                         '<p class="precio">$' + zapatilla.precio.toLocaleString('es-AR') + '</p>' +
+                                         '<button class="add-cart-btn" data-id="' + zapatilla.id + '" data-talle="' + talle + '">Añadir al Carrito</button>' +
+                                         '</div>';
+                    });
+                    
+                    seccion.innerHTML = '<h2 class="talle-section-header">Talle ' + talle + '</h2><div class="productos-grid">' + productosHTML + '</div>';
+                    catalogoContainer.appendChild(seccion);
+                });
+            }
+
+            // Llamamos a la función principal cuando el DOM esté listo
+            document.addEventListener('DOMContentLoaded', iniciarCatalogo);
+
+        } catch (e) {
+            // SI ALGO FALLA, MOSTRAMOS EL ERROR EN PANTALLA
+            var catalogoContainer = document.getElementById('catalogo-container');
+            if (catalogoContainer) {
+                catalogoContainer.innerHTML = '<h2>Ha ocurrido un error al cargar la página:</h2><p style="color:red;">' + e.message + '</p>';
+            }
+            console.error(e); // También lo mostramos en la consola para más detalles
+        }
+    </script>
+</body>
+</html>

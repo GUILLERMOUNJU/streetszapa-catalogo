@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Streetszapa</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #121212; color: white; margin: 0; padding: 20px; }
+        .container { width: 100%; max-width: 900px; padding: 20px; }
+        #login-form, #contenido-protegido { background-color: #1E1E1E; padding: 30px; border-radius: 8px; border: 1px solid #333; }
+        #login-form { max-width: 400px; margin: auto; }
+        #contenido-protegido { display: none; text-align: left; }
+        h1, h2, h3 { text-align: center; color: #FFD700; }
+        h3 { margin-top: 30px; border-top: 1px solid #333; padding-top: 30px;}
+        label { display: block; margin-bottom: 5px; font-weight: 600; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #444; background-color: #333; color: white; box-sizing: border-box; }
+        button { padding: 12px; background-color: #FFD700; color: #121212; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        #login-form button { width: 100%; }
+        .error-msg { color: #ff4d4d; text-align: center; margin-top: 15px; height: 20px; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .admin-table th, .admin-table td { padding: 12px; border: 1px solid #333; text-align: left; vertical-align: middle; }
+        .admin-table th { background-color: #333; font-weight: 600; }
+        .stock-control { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+        .stock-input { width: 60px; padding: 8px; margin: 0; }
+        .save-stock-btn { font-size: 0.8rem; padding: 8px 10px; background-color: #25D366; color: white; }
+        .delete-btn { font-size: 0.8rem; padding: 6px 10px; background-color: #D32F2F; color: white; display: block; margin-top: 10px; }
+        #add-product-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .form-full-width { grid-column: 1 / -1; }
+        #talles-dynamic-section { grid-column: 1 / -1; border-top: 1px solid #444; margin-top: 10px; padding-top: 20px; }
+        .talle-adder { display: flex; gap: 15px; align-items: flex-end; }
+        #btn-add-talle { height: 42px; padding: 8px 15px; font-size: 0.9rem; }
+        #talles-agregados-lista { list-style: none; padding: 0; margin-top: 15px; }
+        .talle-agregado-item { background-color: #333; padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div id="login-form">
+            <h1>Admin Streetszapa</h1>
+            <form id="form"><label for="email">Email</label><input type="email" id="email" required><label for="password">Contraseña</label><input type="password" id="password" required><button type="submit">Ingresar</button></form>
+            <p id="error-message" class="error-msg"></p>
+        </div>
+        <div id="contenido-protegido">
+            <h2>Panel de Control</h2>
+            <div id="add-product-section">
+                <h3>Añadir Nuevo Producto</h3>
+                <form id="add-product-form">
+                    <div><label for="nombre">Nombre del Modelo</label><input type="text" id="nombre" required></div>
+                    <div><label for="precio">Precio</label><input type="number" id="precio" min="0" required></div>
+                    <div><label for="marca">Marca</label><select id="marca" required></select></div>
+                    <div><label for="foto">Foto del Producto</label><input type="file" id="foto" accept="image/*" required></div>
+                    <div id="talles-dynamic-section">
+                        <h4>Añadir Talles y Stock</h4>
+                        <div class="talle-adder">
+                            <div><label for="nuevo-talle">Talle</label><input type="text" id="nuevo-talle"></div>
+                            <div><label for="nuevo-stock">Stock</label><input type="number" id="nuevo-stock" min="0"></div>
+                            <button type="button" id="btn-add-talle">Añadir Talle</button>
+                        </div>
+                        <p><strong>Talles a registrar:</strong></p>
+                        <ul id="talles-agregados-lista"></ul>
+                    </div>
+                    <div class="form-full-width"><button type="submit">Guardar Nuevo Producto</button></div>
+                </form>
+            </div>
+            <h3>Inventario Actual</h3>
+            <table class="admin-table">
+                <thead><tr><th>Producto</th><th>Precio</th><th>Talles y Stock</th></tr></thead>
+                <tbody id="inventario-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://ilauxmesrvylqtluidpv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const loginForm = document.getElementById('form');
+        const loginContainer = document.getElementById('login-form');
+        const contenidoProtegido = document.getElementById('contenido-protegido');
+        const errorMessage = document.getElementById('error-message');
+        const inventarioBody = document.getElementById('inventario-body');
+        const addProductForm = document.getElementById('add-product-form');
+        const btnAddTalle = document.getElementById('btn-add-talle');
+        const tallesAgregadosLista = document.getElementById('talles-agregados-lista');
+        let tallesParaAgregar = [];
+
+        async function cargarMarcasEnSelector() {
+            const selector = document.getElementById('marca');
+            selector.innerHTML = '<option value="">Cargando marcas...</option>';
+            let { data: marcas, error } = await supabaseClient.from('marcas').select('*');
+            if (error) { selector.innerHTML = '<option value="">Error</option>'; } 
+            else {
+                selector.innerHTML = '<option value="" disabled selected>-- Elige --</option>';
+                marcas.forEach(marca => {
+                    selector.innerHTML += `<option value="${marca.id}">${marca.nombre}</option>`;
+                });
+            }
+        }
+
+        async function mostrarInventario() {
+            inventarioBody.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
+            let { data: modelos, error } = await supabaseClient.from('modelos').select('*, inventario(*)').order('created_at', { ascending: false });
+            if (error) { inventarioBody.innerHTML = '<tr><td colspan="3">Error.</td></tr>'; } 
+            else {
+                inventarioBody.innerHTML = '';
+                modelos.forEach(modelo => {
+                    let tallesHTML = modelo.inventario.map(item => `
+                        <div class="stock-control"><span>Talle: ${item.talle}</span><input class="stock-input" type="number" value="${item.stock}" min="0"><button class="save-stock-btn" data-inventario-id="${item.id}">Guardar</button></div>`).join('');
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>
+                            ${modelo.nombre}
+                            <button class="delete-btn" data-modelo-id="${modelo.id}" data-foto-url="${modelo.foto_url}">Eliminar Producto</button>
+                        </td>
+                        <td>$${modelo.precio.toLocaleString('es-AR')}</td>
+                        <td>${tallesHTML || 'Sin talles registrados'}</td>
+                    `;
+                    inventarioBody.appendChild(fila);
+                });
+            }
+        }
+        
+        function renderTallesAgregados() {
+            tallesAgregadosLista.innerHTML = '';
+            if (tallesParaAgregar.length === 0) {
+                tallesAgregadosLista.innerHTML = '<li>Aún no has añadido talles.</li>';
+            } else {
+                tallesParaAgregar.forEach(item => {
+                    tallesAgregadosLista.innerHTML += `<li class="talle-agregado-item"><span>Talle: ${item.talle}</span> <span>Stock: ${item.stock}</span></li>`;
+                });
+            }
+        }
+        
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) { errorMessage.textContent = 'Email o contraseña incorrectos.'; } 
+            else {
+                loginContainer.style.display = 'none';
+                contenidoProtegido.style.display = 'block';
+                mostrarInventario(); 
+                cargarMarcasEnSelector();
+                renderTallesAgregados();
+            }
+        });
+
+        btnAddTalle.addEventListener('click', function() {
+            const talleInput = document.getElementById('nuevo-talle');
+            const stockInput = document.getElementById('nuevo-stock');
+            if (talleInput.value.trim() && stockInput.value.trim()) {
+                tallesParaAgregar.push({ talle: talleInput.value.trim(), stock: parseInt(stockInput.value) });
+                renderTallesAgregados();
+                talleInput.value = ''; stockInput.value = ''; talleInput.focus();
+            } else {
+                alert('Ingresa un talle y un stock.');
+            }
+        });
+
+        addProductForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const boton = e.target.querySelector('button[type="submit"]');
+            boton.textContent = 'Guardando...'; boton.disabled = true;
+            try {
+                const nombre = document.getElementById('nombre').value;
+                const precio = document.getElementById('precio').value;
+                const marcaId = document.getElementById('marca').value;
+                const fotoFile = document.getElementById('foto').files[0];
+                if (tallesParaAgregar.length === 0) throw new Error("Debes añadir al menos un talle.");
+                if (!fotoFile) throw new Error("No se ha seleccionado foto.");
+
+                const cleanFileName = fotoFile.name.replace(/\s+/g, '-');
+                const fileName = `${Date.now()}-${cleanFileName}`;
+                const { error: uploadError } = await supabaseClient.storage.from('fotos-zapatillas').upload(fileName, fotoFile);
+                if (uploadError) throw uploadError;
+
+                const { data: nuevoModelo, error: modeloError } = await supabaseClient.from('modelos').insert([{ nombre, precio, foto_url: fileName, marca_id: marcaId }]).select();
+                if (modeloError) throw modeloError;
+                
+                const nuevoModeloId = nuevoModelo[0].id;
+                const filasParaInventario = tallesParaAgregar.map(item => ({ talle: item.talle, stock: item.stock, modelo_id: nuevoModeloId }));
+                const { error: inventarioError } = await supabaseClient.from('inventario').insert(filasParaInventario);
+                if (inventarioError) throw inventarioError;
+                
+                alert('¡Producto añadido con éxito!');
+                addProductForm.reset();
+                tallesParaAgregar = [];
+                renderTallesAgregados();
+                mostrarInventario();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                console.error('Error:', error);
+            } finally {
+                boton.textContent = 'Guardar Nuevo Producto';
+                boton.disabled = false;
+            }
+        });
+        
+        inventarioBody.addEventListener('click', async function(e) {
+            if (e.target.classList.contains('save-stock-btn')) {
+                const boton = e.target;
+                const inventarioId = boton.dataset.inventarioId;
+                const nuevoStock = boton.parentElement.querySelector('.stock-input').value;
+                boton.textContent = '...';
+                const { error } = await supabaseClient.from('inventario').update({ stock: nuevoStock }).eq('id', inventarioId);
+                if (error) { alert('Error.'); boton.textContent = 'Guardar'; } 
+                else { boton.textContent = '✔'; setTimeout(() => { boton.textContent = 'Guardar'; }, 2000); }
+            }
+            if (e.target.classList.contains('delete-btn')) {
+                const boton = e.target;
+                const modeloId = boton.dataset.modeloId;
+                const fotoUrl = boton.dataset.fotoUrl;
+                if (confirm('¿Estás seguro de que quieres eliminar este producto para siempre?')) {
+                    try {
+                        boton.textContent = '...'; boton.disabled = true;
+                        await supabaseClient.from('inventario').delete().eq('modelo_id', modeloId);
+                        await supabaseClient.from('modelos').delete().eq('id', modeloId);
+                        await supabaseClient.storage.from('fotos-zapatillas').remove([fotoUrl]);
+                        alert('¡Producto eliminado!');
+                        mostrarInventario();
+                    } catch (error) {
+                        alert('Error al eliminar.'); console.error('Error:', error);
+                        boton.textContent = 'Eliminar Producto'; boton.disabled = false;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
