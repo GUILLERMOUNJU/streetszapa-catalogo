@@ -35,6 +35,7 @@
         .product-details { flex-grow: 1; }
         .product-details .name { font-weight: 600; font-size: 1.1em; }
         .product-details .brand { font-size: 0.9em; color: #bbb; }
+        /* .product-details .price { font-size: 0.9em; color: #FFD700; }  -- ELIMINADO: PRECIO */
 
         .talles-stock-column { max-width: 250px; } /* Para controlar el ancho de la columna de talles */
         .stock-control { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; background-color: #292929; padding: 5px 8px; border-radius: 4px; }
@@ -195,8 +196,7 @@
                     <tr>
                         <th>Producto</th>
                         <th>Talles y Stock</th>
-                        <th>Acciones</th> 
-                    </tr>
+                        <th>Acciones</th> </tr>
                 </thead>
                 <tbody id="inventario-body">
                     </tbody>
@@ -209,10 +209,7 @@
             <span class="close-button">&times;</span>
             <h3>Editar Producto</h3>
             <form id="edit-product-form">
-                <input type="hidden" id="edit-product-id"> 
-                <input type="hidden" id="edit-current-foto-url"> 
-
-                <div class="form-group">
+                <input type="hidden" id="edit-product-id"> <input type="hidden" id="edit-current-foto-url"> <div class="form-group">
                     <label for="edit-nombre">Nombre del Modelo</label>
                     <input type="text" id="edit-nombre" required>
                 </div>
@@ -238,7 +235,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://ilauxmesrvylqtluidpv.supabase.co'; // Tus credenciales
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFhZXMuc3J2eWxxdGx1aWRwdiIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y'; // Tus credenciales
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y'; // Tus credenciales
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Referencias a elementos del DOM
@@ -251,6 +248,7 @@
         // Formulario de añadir producto
         const addProductForm = document.getElementById('add-product-form');
         const nombreAddInput = document.getElementById('nombre-add');
+        // const precioAddInput = document.getElementById('precio-add'); // CAMBIO: Precio eliminado
         const marcaAddSelect = document.getElementById('marca-add');
         const fotoAddInput = document.getElementById('foto-add');
         const btnAddTalle = document.getElementById('btn-add-talle');
@@ -266,6 +264,7 @@
         const editProductIdInput = document.getElementById('edit-product-id');
         const editCurrentFotoUrlInput = document.getElementById('edit-current-foto-url');
         const editNombreInput = document.getElementById('edit-nombre');
+        // const editPrecioInput = document.getElementById('edit-precio'); // CAMBIO: Precio eliminado
         const editMarcaSelect = document.getElementById('edit-marca');
         const editCurrentFoto = document.getElementById('edit-current-foto');
         const editFotoInput = document.getElementById('edit-foto');
@@ -300,7 +299,7 @@
 
         // Muestra el inventario en la tabla principal
         async function mostrarInventario() {
-            inventarioBody.innerHTML = '<tr><td colspan="3">Cargando inventario...</td></tr>'; // Solo 3 columnas ahora: Producto, Talles, Acciones
+            inventarioBody.innerHTML = '<tr><td colspan="4">Cargando inventario...</td></tr>'; // Columnas: Producto, Talles, Acciones
             
             // Consultar modelos e incluir sus marcas e inventarios
             let { data: modelos, error } = await supabaseClient
@@ -310,17 +309,17 @@
                     nombre,
                     foto_url,
                     marcas ( nombre ),
-                    inventario ( id, talle, stock ) 
+                    inventario ( id, talle, cantidad )
                 `)
-                .order('created_at', { ascending: false }); // **CORREGIDO: 'desc' o 'asc' si fuera necesario, pero 'false' para descending es correcto**
+                .order('created_at', { ascending: false });
 
             if (error) {
-                inventarioBody.innerHTML = '<tr><td colspan="3">Error al cargar el inventario.</td></tr>';
+                inventarioBody.innerHTML = '<tr><td colspan="4">Error al cargar el inventario.</td></tr>';
                 console.error("Error al cargar inventario:", error);
             } else {
                 inventarioBody.innerHTML = '';
                 if (modelos.length === 0) {
-                    inventarioBody.innerHTML = '<tr><td colspan="3">No hay productos en el inventario.</td></tr>';
+                    inventarioBody.innerHTML = '<tr><td colspan="4">No hay productos en el inventario.</td></tr>';
                     return;
                 }
 
@@ -336,22 +335,14 @@
                     let tallesHTML = tallesOrdenados.map(item => `
                         <div class="stock-control">
                             <span>Talle ${item.talle}:</span>
-                            <input class="stock-input" type="number" value="${item.stock}" min="0"> 
+                            <input class="stock-input" type="number" value="${item.cantidad}" min="0">
                             <button class="save-stock-btn" data-inventario-id="${item.id}">Guardar</button>
                             <button class="delete-stock-btn" data-inventario-id="${item.id}">X</button>
                         </div>
                     `).join('');
 
-                    // Permite añadir talle si no hay ninguno registrado
                     if (tallesOrdenados.length === 0) {
-                        tallesHTML = `
-                            <div class="stock-control">
-                                <span style="color:#aaa;">Sin talles.</span>
-                                <input class="stock-input new-talle-input" type="text" placeholder="Nuevo talle">
-                                <input class="stock-input new-stock-input" type="number" value="1" min="0">
-                                <button class="add-new-talle-btn" data-modelo-id="${modelo.id}">+</button>
-                            </div>
-                        `;
+                        tallesHTML = 'Sin talles registrados. <button class="add-talle-to-existing-btn" data-modelo-id="${modelo.id}">Añadir Talle</button>';
                     }
 
                     const fila = document.createElement('tr');
@@ -362,7 +353,7 @@
                                 <div class="product-details">
                                     <div class="name">${modelo.nombre}</div>
                                     <div class="brand">${modelo.marcas ? modelo.marcas.nombre : 'Sin Marca'}</div>
-                                </div>
+                                    </div>
                             </div>
                         </td>
                         <td>${tallesHTML}</td>
@@ -433,7 +424,7 @@
             }
 
             // Opcional: Evitar duplicados de talle en la lista temporal
-            if (tallesParaAgregar.some(item => item.talle.toLowerCase() === talle.toLowerCase())) { // Comparación case-insensitive
+            if (tallesParaAgregar.some(item => item.talle === talle)) {
                 alert(`El talle "${talle}" ya fue agregado.`);
                 return;
             }
@@ -464,10 +455,11 @@
 
             try {
                 const nombre = nombreAddInput.value;
+                // const precio = parseFloat(precioAddInput.value); // CAMBIO: Precio eliminado
                 const marcaId = marcaAddSelect.value;
                 const fotoFile = fotoAddInput.files[0];
 
-                if (!nombre || !marcaId) {
+                if (!nombre || !marcaId) { // CAMBIO: Validacion sin precio
                     throw new Error("Por favor, completa todos los campos (nombre y marca).");
                 }
                 if (tallesParaAgregar.length === 0) {
@@ -486,7 +478,7 @@
                 // Insertar el nuevo modelo en la tabla 'modelos'
                 const { data: nuevoModelo, error: modeloError } = await supabaseClient
                     .from('modelos')
-                    .insert([{ nombre, foto_url: fileName, marca_id: marcaId }]) 
+                    .insert([{ nombre, foto_url: fileName, marca_id: marcaId }]) // CAMBIO: Precio eliminado
                     .select(); // Asegúrate de que retorna el objeto insertado para obtener el ID
                 
                 if (modeloError) throw modeloError;
@@ -495,8 +487,7 @@
                 const nuevoModeloId = nuevoModelo[0].id;
 
                 // Insertar los talles y stock en la tabla 'inventario'
-                // *** IMPORTANTE: Usa 'stock' en lugar de 'cantidad' aquí ***
-                const filasParaInventario = tallesParaAgregar.map(item => ({ talle: item.talle, stock: item.stock, modelo_id: nuevoModeloId }));
+                const filasParaInventario = tallesParaAgregar.map(item => ({ talle: item.talle, cantidad: item.stock, modelo_id: nuevoModeloId }));
                 const { error: inventarioError } = await supabaseClient.from('inventario').insert(filasParaInventario);
                 if (inventarioError) throw inventarioError;
                 
@@ -530,13 +521,12 @@
                 }
 
                 boton.textContent = '...';
-                boton.disabled = true; 
+                boton.disabled = true; // Deshabilitar para evitar múltiples clics
                 try {
-                    // *** IMPORTANTE: Usa 'stock' en lugar de 'cantidad' aquí ***
-                    const { error } = await supabaseClient.from('inventario').update({ stock: nuevoStock }).eq('id', inventarioId);
+                    const { error } = await supabaseClient.from('inventario').update({ cantidad: nuevoStock }).eq('id', inventarioId);
                     if (error) throw error;
-                    boton.textContent = '✔'; 
-                    setTimeout(() => { boton.textContent = 'Guardar'; boton.disabled = false; }, 1500); 
+                    boton.textContent = '✔'; // Muestra un check de éxito
+                    setTimeout(() => { boton.textContent = 'Guardar'; boton.disabled = false; }, 1500); // Vuelve al estado normal
                 } catch (error) {
                     alert('Error al actualizar stock.');
                     console.error('Error:', error);
@@ -557,7 +547,7 @@
                         const { error } = await supabaseClient.from('inventario').delete().eq('id', inventarioId);
                         if (error) throw error;
                         alert('Talle eliminado con éxito.');
-                        mostrarInventario(); 
+                        mostrarInventario(); // Recargar la tabla para reflejar el cambio
                     } catch (error) {
                         alert('Error al eliminar talle.');
                         console.error('Error:', error);
@@ -567,63 +557,8 @@
                 }
             }
 
-            // Manejar botón de Añadir nuevo talle para un producto existente
-            if (e.target.classList.contains('add-new-talle-btn')) {
-                const boton = e.target;
-                const modeloId = boton.dataset.modeloId;
-                const talleInput = boton.parentElement.querySelector('.new-talle-input');
-                const stockInput = boton.parentElement.querySelector('.new-stock-input');
-                
-                const talle = talleInput.value.trim();
-                const stock = parseInt(stockInput.value);
-
-                if (!talle || isNaN(stock) || stock < 0) {
-                    alert('Ingresa un talle válido y un stock numérico.');
-                    return;
-                }
-
-                boton.textContent = '...';
-                boton.disabled = true;
-                try {
-                    // Primero, verifica si el talle ya existe para este modelo
-                    const { data: existingTalle, error: checkError } = await supabaseClient
-                        .from('inventario')
-                        .select('id')
-                        .eq('modelo_id', modeloId)
-                        .eq('talle', talle)
-                        .single();
-
-                    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 es "no rows found"
-                        throw checkError;
-                    }
-
-                    if (existingTalle) {
-                        alert(`El talle "${talle}" ya existe para este producto. Actualiza el stock directamente.`);
-                    } else {
-                        // Si no existe, lo inserta
-                        const { error: insertError } = await supabaseClient
-                            .from('inventario')
-                            .insert([{ modelo_id: modeloId, talle: talle, stock: stock }]); // Usa 'stock'
-                        
-                        if (insertError) throw insertError;
-                        alert('Talle añadido con éxito!');
-                        talleInput.value = '';
-                        stockInput.value = '1';
-                    }
-                    
-                    mostrarInventario(); // Recargar el inventario
-                } catch (error) {
-                    alert(`Error al añadir talle: ${error.message}`);
-                    console.error('Error:', error);
-                } finally {
-                    boton.textContent = '+';
-                    boton.disabled = false;
-                }
-            }
-
-
             // Manejar botón de Eliminar Producto
-            if (e.target.classList.contains('delete-btn')) { 
+            if (e.target.classList.contains('delete-btn') && e.target.id !== 'realizar-pedido-btn') { // Añadido id !== para evitar conflicto
                 const boton = e.target;
                 const modeloId = boton.dataset.modeloId;
                 const fotoUrl = boton.dataset.fotoUrl; // Nombre de archivo de la foto
@@ -646,6 +581,7 @@
                             const { error: deleteFotoError } = await supabaseClient.storage.from('fotos-zapatillas').remove([fotoUrl]);
                             if (deleteFotoError) {
                                 console.warn("Advertencia: No se pudo eliminar la foto del storage.", deleteFotoError);
+                                // No lanzar error crítico si la foto no se pudo eliminar, el producto ya está fuera de la DB
                             }
                         }
                         
@@ -675,9 +611,9 @@
             // Consultar los datos del modelo específico
             const { data: modelo, error } = await supabaseClient
                 .from('modelos')
-                .select(`id, nombre, foto_url, marca_id, marcas ( nombre )`) 
+                .select(`id, nombre, foto_url, marca_id, marcas ( nombre )`) // CAMBIO: Precio eliminado
                 .eq('id', modeloId)
-                .single(); 
+                .single(); // Usa .single() para un solo registro
 
             if (error || !modelo) {
                 alert('Error al cargar los datos del producto para edición.');
@@ -689,6 +625,7 @@
             editProductIdInput.value = modelo.id;
             editCurrentFotoUrlInput.value = modelo.foto_url;
             editNombreInput.value = modelo.nombre;
+            // editPrecioInput.value = modelo.precio; // CAMBIO: Precio eliminado
 
             // Cargar marcas en el selector del modal y seleccionar la marca actual
             await cargarMarcasEnSelectores(); // Asegurarse de que las marcas están cargadas
@@ -726,12 +663,13 @@
 
             const modeloId = editProductIdInput.value;
             const nuevoNombre = editNombreInput.value;
+            // const nuevoPrecio = parseFloat(editPrecioInput.value); // CAMBIO: Precio eliminado
             const nuevaMarcaId = editMarcaSelect.value;
             const nuevaFotoFile = editFotoInput.files[0];
             let nuevaFotoUrl = editCurrentFotoUrlInput.value; // Por defecto, mantiene la foto actual
 
             try {
-                if (!nuevoNombre || !nuevaMarcaId) {
+                if (!nuevoNombre || !nuevaMarcaId) { // CAMBIO: Validacion sin precio
                     throw new Error("Por favor, completa todos los campos (nombre y marca).");
                 }
                 
@@ -757,6 +695,7 @@
                     .from('modelos')
                     .update({
                         nombre: nuevoNombre,
+                        // precio: nuevoPrecio, // CAMBIO: Precio eliminado
                         marca_id: nuevaMarcaId,
                         foto_url: nuevaFotoUrl
                     })
@@ -765,9 +704,9 @@
                 if (updateModeloError) throw updateModeloError;
 
                 alert('¡Producto actualizado con éxito!');
-                editProductModal.style.display = 'none'; 
-                editProductForm.reset(); 
-                mostrarInventario(); 
+                editProductModal.style.display = 'none'; // Cierra el modal
+                editProductForm.reset(); // Limpia el formulario
+                mostrarInventario(); // Recarga el inventario para ver los cambios
                 
             } catch (error) {
                 alert(`Error al actualizar el producto: ${error.message}`);
