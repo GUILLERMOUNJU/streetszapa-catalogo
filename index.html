@@ -64,9 +64,8 @@
         }
         .zapatilla-card img { width: 100%; height: 250px; object-fit: cover; }
         .card-content { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
-        .card-content h2 { font-size: 1.3rem; font-weight: 600; flex-grow: 1; margin-top: 5px; margin-bottom: 10px; } /* Ajuste de márgenes */
+        .card-content h2 { font-size: 1.3rem; font-weight: 600; flex-grow: 1; margin-top: 5px; margin-bottom: 10px; }
         .card-content .marca { font-size: 0.95rem; color: var(--text-secondary-color); margin-bottom: 5px; }
-        /* .card-content .precio { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin: 10px 0 15px 0; } */ /* ELIMINADO: Precio */
         .stock-info { font-size: 0.9em; color: var(--text-secondary-color); margin-top: 5px; }
         .talle-stock-item { 
             display: inline-block; 
@@ -75,8 +74,8 @@
             padding: 5px 10px; 
             border-radius: 5px; 
             margin: 3px; 
-            font-size: 0.85em; /* Un poco más pequeño para optimizar espacio */
-            white-space: nowrap; /* Evita que el talle/stock se parta */
+            font-size: 0.85em; 
+            white-space: nowrap; 
         }
         .talle-stock-item.no-stock { background-color: #666; opacity: 0.7; }
 
@@ -112,7 +111,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         (function() {
-            // Reemplaza con tus credenciales de Supabase
             var SUPABASE_URL = 'https://ilauxmesrvylqtluidpv.supabase.co';
             var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFhZXMuc3J2eWxxdGx1aWRwdiIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
             var supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -120,12 +118,10 @@
             var catalogoContainer = document.getElementById('catalogo-container');
             var searchInput = document.getElementById('search-input'); 
 
-            let allProducts = []; // Almacena todos los productos para filtrar en el cliente
+            let allProducts = []; 
 
-            // Función principal para cargar y mostrar el catálogo
             async function iniciarCatalogo() {
                 try {
-                    // Consulta los modelos, incluyendo la marca y el inventario (sin el campo de precio)
                     const { data: modelos, error: modelosError } = await supabaseClient
                         .from('modelos')
                         .select(`
@@ -133,15 +129,14 @@
                             nombre,
                             foto_url,
                             marcas ( nombre ),
-                            inventario ( talle, cantidad )
-                        `);
+                            inventario ( talle, stock ) 
+                        `); // *** CORREGIDO: SELECCIONA 'stock' EN LUGAR DE 'cantidad' ***
 
                     if (modelosError) throw modelosError;
 
-                    // Almacenar todos los productos cargados para poder filtrarlos después
                     allProducts = modelos;
                     
-                    renderizarCatalogo(allProducts); // Mostrar todos los productos inicialmente
+                    renderizarCatalogo(allProducts);
 
                 } catch (e) {
                     catalogoContainer.innerHTML = '<h2>Ha ocurrido un error al cargar el catálogo:</h2><p style="color:red;">' + e.message + '</p>';
@@ -149,16 +144,14 @@
                 }
             }
 
-            // Función para renderizar el catálogo basada en una lista de productos
             function renderizarCatalogo(productosARenderizar) {
                 if (!productosARenderizar || productosARenderizar.length === 0) {
                     catalogoContainer.innerHTML = '<p>No hay productos disponibles con el criterio de búsqueda actual.</p>';
                     return;
                 }
 
-                catalogoContainer.innerHTML = ''; // Limpiar el contenido actual
+                catalogoContainer.innerHTML = '';
 
-                // Agrupar los productos por marca para una mejor visualización
                 const productosPorMarca = {};
                 productosARenderizar.forEach(modelo => {
                     const marcaNombre = modelo.marcas ? modelo.marcas.nombre : 'Sin Marca';
@@ -168,7 +161,6 @@
                     productosPorMarca[marcaNombre].push(modelo);
                 });
 
-                // Ordenar las marcas alfabéticamente
                 const marcasOrdenadas = Object.keys(productosPorMarca).sort();
 
                 marcasOrdenadas.forEach(marca => {
@@ -180,22 +172,18 @@
                     productosPorMarca[marca].forEach(zapatilla => {
                         const imageUrl = SUPABASE_URL + '/storage/v1/object/public/fotos-zapatillas/' + zapatilla.foto_url;
                         
-                        // Construir la información de talles y stock
                         let tallesStockHTML = '';
                         if (zapatilla.inventario && zapatilla.inventario.length > 0) {
-                            // Ordenar talles numéricamente para una visualización coherente
                             const tallesOrdenados = zapatilla.inventario.sort((a, b) => {
-                                // Convierte "us 8" a 8, "41" a 41 para ordenar correctamente
                                 const talleA = parseFloat(String(a.talle).toLowerCase().replace('us ', ''));
                                 const talleB = parseFloat(String(b.talle).toLowerCase().replace('us ', ''));
                                 return talleA - talleB;
                             });
                             
                             tallesOrdenados.forEach(item => {
-                                const tieneStock = item.cantidad > 0;
-                                // Formatear el talle para mostrar
+                                const tieneStock = item.stock > 0; // *** CORREGIDO: USA 'item.stock' ***
                                 const talleDisplay = String(item.talle).startsWith('us ') ? item.talle.toUpperCase() : item.talle;
-                                tallesStockHTML += `<span class="talle-stock-item ${!tieneStock ? 'no-stock' : ''}">${talleDisplay} (${item.cantidad})</span>`;
+                                tallesStockHTML += `<span class="talle-stock-item ${!tieneStock ? 'no-stock' : ''}">${talleDisplay} (${item.stock})</span>`; // *** CORREGIDO: USA 'item.stock' ***
                             });
                         } else {
                             tallesStockHTML = '<span class="talle-stock-item no-stock">Sin stock registrado</span>';
@@ -216,43 +204,38 @@
                 });
             }
 
-            // Función para filtrar productos por talle O por marca
             function filtrarCatalogo() {
                 const searchTerm = searchInput.value.toLowerCase().trim();
                 
                 if (searchTerm === '') {
-                    renderizarCatalogo(allProducts); // Si el buscador está vacío, mostrar todo
+                    renderizarCatalogo(allProducts);
                     return;
                 }
 
                 const filteredProducts = allProducts.filter(product => {
                     const marcaNombre = product.marcas ? product.marcas.nombre.toLowerCase() : '';
                     
-                    // Condición para buscar por marca
                     if (marcaNombre.includes(searchTerm)) {
                         return true;
                     }
 
-                    // Condición para buscar por talle
                     if (product.inventario && product.inventario.length > 0) {
                         return product.inventario.some(item => {
                             const talleString = String(item.talle).toLowerCase();
                             return talleString.includes(searchTerm);
                         });
                     }
-                    return false; // No coincide ni por marca ni por talle
+                    return false;
                 });
 
                 renderizarCatalogo(filteredProducts);
             }
 
-            // Event Listener para el buscador
             searchInput.addEventListener('input', filtrarCatalogo);
 
-            // Iniciar el catálogo cuando el DOM esté completamente cargado
             document.addEventListener('DOMContentLoaded', iniciarCatalogo);
 
-        })(); // Fin de la función autoejecutable
+        })(); 
     </script>
 </body>
 </html>
