@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -414,11 +416,17 @@
                     const modelo = inventarioAgrupado[modeloId];
                     const row = document.createElement('tr');
 
+                    // Construir la URL pública de la foto.
+                    // Esto maneja casos donde foto_url podría ser solo el path o ya la URL completa.
+                    const publicFotoUrl = modelo.foto_url.startsWith('http') 
+                        ? modelo.foto_url 
+                        : supabase.storage.from('fotos-productos').getPublicUrl(modelo.foto_url).data.publicUrl;
+
                     // Columna Producto
                     const productTd = document.createElement('td');
                     productTd.innerHTML = `
                         <div class="product-info-cell">
-                            <img src="${modelo.foto_url}" alt="${modelo.nombre}">
+                            <img src="${publicFotoUrl}" alt="${modelo.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/80x80/cccccc/000000?text=No+Img';">
                             <div class="product-details">
                                 <div class="name">${modelo.nombre}</div>
                             </div>
@@ -786,8 +794,13 @@
             editMarcaSelect.value = modelo.marca_id; // Selecciona la marca actual
 
             // Muestra la imagen actual
-            if (modelo.foto_url) {
-                editCurrentFoto.src = modelo.foto_url; // La URL ya es pública
+            // Construir la URL pública de la foto para el modal de edición también
+            const publicFotoUrl = modelo.foto_url.startsWith('http') 
+                ? modelo.foto_url 
+                : supabase.storage.from('fotos-productos').getPublicUrl(modelo.foto_url).data.publicUrl;
+
+            if (publicFotoUrl) {
+                editCurrentFoto.src = publicFotoUrl; 
                 editCurrentFoto.style.display = 'block';
             } else {
                 editCurrentFoto.src = '';
@@ -848,7 +861,7 @@
                     const cleanFileName = nuevaFotoFile.name.replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
                     const newFileName = `${Date.now()}-${cleanFileName}`;
                     // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
-                    const { error: uploadError } = await supabase.storage.from('fotos-productos').upload(newFileName, nuevaFotoFile); // ¡CORREGIDO AQUÍ!
+                    const { data: uploadData, error: uploadError } = await supabase.storage.from('fotos-productos').upload(newFileName, nuevaFotoFile); // ¡CORREGIDO AQUÍ!
                     if (uploadError) throw uploadError;
 
                     // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
