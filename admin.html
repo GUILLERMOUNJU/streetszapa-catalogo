@@ -1,29 +1,91 @@
-<!DOCTYPE html>
-<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Streetszapa</title>
+    <title>Panel de Control - StreetZapato</title>
+    <!-- Incluye Supabase JS SDK desde un CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Aquí van tus estilos CSS existentes, más algunos nuevos o modificados */
-        body { font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #121212; color: white; margin: 0; padding: 20px; }
-        .container { width: 100%; max-width: 1000px; padding: 20px; } /* Aumentado max-width para el modal */
-        #login-form, #contenido-protegido { background-color: #1E1E1E; padding: 30px; border-radius: 8px; border: 1px solid #333; }
-        #login-form { max-width: 400px; margin: auto; }
-        #contenido-protegido { display: none; text-align: left; }
-        h1, h2, h3 { text-align: center; color: #FFD700; }
-        h3 { margin-top: 30px; border-top: 1px solid #333; padding-top: 30px;}
-        label { display: block; margin-bottom: 5px; font-weight: 600; }
-        input, select, textarea { /* Añadido textarea para consistencia de estilo */
-            width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #444; background-color: #333; color: white; box-sizing: border-box;
+        /* Aquí va tu CSS actual, como el que se ve en la Captura de pantalla 2025-07-09 160608.png */
+        /* Ejemplo de CSS base para que no te falte estructura */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #121212; /* Un color oscuro para el fondo */
+            color: #f8f8f2; /* Color de texto claro */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        button { padding: 12px; background-color: #FFD700; color: #121212; border: none; border-radius: 4px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background-color 0.2s ease; }
-        button:hover:not(:disabled) { background-color: #e6c200; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        #login-form button { width: 100%; }
-        .error-msg { color: #ff4d4d; text-align: center; margin-top: 15px; height: 20px; }
-
+        .container {
+            background-color: #1e1e1e; /* Color más oscuro para el contenedor */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        h1, h2, h3 {
+            color: #FFD700; /* Un color de acento llamativo */
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #f8f8f2; /* Color de acento para etiquetas */
+        }
+        input[type="text"], input[type="number"], select, input[type="file"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #333;
+            color: #f8f8f2;
+        }
+        button {
+            background-color: #FFD700; /* Un verde vibrante */
+            color: #121212;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #e6c200; /* Un azul claro al pasar el ratón */
+        }
+        .error-message {
+            color: #ff5555; /* Rojo para mensajes de error */
+            margin-top: 10px;
+            text-align: center;
+        }
+        .success-message {
+            color: #50fa7b; /* Verde para mensajes de éxito */
+            margin-top: 10px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+            color: #f8f8f2;
+        }
+        th {
+            background-color: #333;
+        }
+        td button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
         /* Estilos para la tabla de administración */
         .admin-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         .admin-table th, .admin-table td { padding: 12px; border: 1px solid #333; text-align: left; vertical-align: middle; }
@@ -35,7 +97,6 @@
         .product-details { flex-grow: 1; }
         .product-details .name { font-weight: 600; font-size: 1.1em; }
         .product-details .brand { font-size: 0.9em; color: #bbb; }
-        /* .product-details .price { font-size: 0.9em; color: #FFD700; }  -- ELIMINADO: PRECIO */
 
         .talles-stock-column { max-width: 250px; } /* Para controlar el ancho de la columna de talles */
         .stock-control { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; background-color: #292929; padding: 5px 8px; border-radius: 4px; }
@@ -130,406 +191,441 @@
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <div id="login-form">
-            <h1>Admin Streetszapa</h1>
-            <form id="form">
-                <label for="email">Email</label>
-                <input type="email" id="email" required>
-                <label for="password">Contraseña</label>
-                <input type="password" id="password" required>
-                <button type="submit">Ingresar</button>
-            </form>
-            <p id="error-message" class="error-msg"></p>
-        </div>
+        <h1>Panel de Control</h1>
 
-        <div id="contenido-protegido">
-            <h2>Panel de Control</h2>
+        <section id="auth-section">
+            <h2>Iniciar Sesión / Registrarse</h2>
+            <input type="email" id="auth-email" placeholder="Correo electrónico">
+            <input type="password" id="auth-password" placeholder="Contraseña">
+            <button id="login-button">Iniciar Sesión</button>
+            <button id="signup-button">Registrarse</button>
+            <p id="auth-message" class="error-message"></p>
+        </section>
 
-            <div id="add-product-section">
-                <h3>Añadir Nuevo Producto</h3>
-                <form id="add-product-form">
-                    <div>
-                        <label for="nombre-add">Nombre del Modelo</label>
-                        <input type="text" id="nombre-add" required>
-                    </div>
-                    <div>
-                        <label for="marca-add">Marca</label>
-                        <select id="marca-add" required></select>
-                    </div>
-                    <div>
-                        <label for="foto-add">Foto del Producto</label>
-                        <input type="file" id="foto-add" accept="image/*" required>
-                    </div>
-                    <div id="talles-dynamic-section" class="form-full-width">
-                        <h4>Añadir Talles y Stock</h4>
-                        <div class="talle-adder">
-                            <div>
-                                <label for="nuevo-talle">Talle</label>
-                                <input type="text" id="nuevo-talle" placeholder="Ej: 41, US 9.5">
-                            </div>
-                            <div>
-                                <label for="nuevo-stock">Stock</label>
-                                <input type="number" id="nuevo-stock" min="0" value="1">
-                            </div>
-                            <button type="button" id="btn-add-talle">Añadir Talle</button>
-                        </div>
-                        <p><strong>Talles a registrar:</strong></p>
-                        <ul id="talles-agregados-lista"></ul>
-                    </div>
-                    <div class="form-full-width">
-                        <button type="submit">Guardar Nuevo Producto</button>
-                    </div>
-                </form>
+        <section id="product-management-section" style="display: none;">
+            <h2>Añadir Nuevo Producto</h2>
+            <div>
+                <label for="nombre-modelo">Nombre del Modelo</label>
+                <input type="text" id="nombre-modelo">
+            </div>
+            <div>
+                <label for="marca-select">Marca</label>
+                <select id="marca-select">
+                    <!-- Las marcas se cargarán aquí dinámicamente -->
+                    <option value="">Cargando marcas...</option>
+                </select>
+                <p id="marca-error" class="error-message" style="display:none;">Error al cargar</p>
+            </div>
+            <div>
+                <label for="foto-producto">Foto del Producto</label>
+                <input type="file" id="foto-producto" accept="image/*">
             </div>
 
-            <h3>Inventario Actual</h3>
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Talles y Stock</th>
-                        <th>Acciones</th> </tr>
-                </thead>
-                <tbody id="inventario-body">
+            <h3>Añadir Talles y Stock</h3>
+            <div>
+                <label for="talle">Talle</label>
+                <input type="text" id="talle" placeholder="Ej: 41, US 9.5">
+            </div>
+            <div>
+                <label for="stock">Stock</label>
+                <input type="number" id="stock" value="1" min="1">
+            </div>
+            <button id="add-talle-button">Añadir Talle</button>
+            <div id="talles-a-registrar">
+                <h4>Talles a registrar:</h4>
+                <ul id="talles-list">
+                    <!-- Aquí se listarán los talles añadidos temporalmente -->
+                </ul>
+                <p>Aún no has añadido talles para este producto.</p>
+            </div>
+            <button id="guardar-producto-button">Guardar Nuevo Producto</button>
+            <p id="new-product-message" class="success-message"></p>
+
+            <h2>Inventario Actual</h2>
+            <div id="inventario-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Talles y Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventario-body">
+                        <tr><td colspan="3">Cargando inventario...</td></tr>
                     </tbody>
-            </table>
-        </div>
+                </table>
+                <p id="inventario-error" class="error-message" style="display:none;">Error al cargar el inventario</p>
+            </div>
+        </section>
     </div>
 
-    <div id="editProductModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3>Editar Producto</h3>
-            <form id="edit-product-form">
-                <input type="hidden" id="edit-product-id"> <input type="hidden" id="edit-current-foto-url"> <div class="form-group">
-                    <label for="edit-nombre">Nombre del Modelo</label>
-                    <input type="text" id="edit-nombre" required>
-                </div>
-                <div class="form-group">
-                    <label for="edit-marca">Marca</label>
-                    <select id="edit-marca" required></select>
-                </div>
-                <div class="form-group">
-                    <label>Imagen Actual:</label>
-                    <img id="edit-current-foto" src="" alt="Imagen del producto" style="max-width: 150px; display: block; margin-top: 10px;">
-                    <label for="edit-foto" style="margin-top: 15px;">Cambiar Foto (opcional)</label>
-                    <input type="file" id="edit-foto" accept="image/*">
-                </div>
-
-                <div class="modal-buttons">
-                    <button type="button" class="close-button-modal">Cancelar</button>
-                    <button type="submit">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = 'https://ilauxmesrvylqtluidpv.supabase.co'; // Tus credenciales
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y'; // Tus credenciales
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // ** TUS CREDENCIALES DE SUPABASE **
+        const supabaseUrl = 'https://ilauxmesrvylqtluidpv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
 
-        // Referencias a elementos del DOM
-        const loginForm = document.getElementById('form');
-        const loginContainer = document.getElementById('login-form');
-        const contenidoProtegido = document.getElementById('contenido-protegido');
-        const errorMessage = document.getElementById('error-message');
+        // Crea la instancia de Supabase usando el objeto global 'supabase' del CDN
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // --- Elementos del DOM ---
+        const authSection = document.getElementById('auth-section');
+        const productManagementSection = document.getElementById('product-management-section');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const loginButton = document.getElementById('login-button');
+        const signupButton = document.getElementById('signup-button');
+        const authMessage = document.getElementById('auth-message');
+
+        const marcaSelect = document.getElementById('marca-select');
+        const marcaError = document.getElementById('marca-error');
         const inventarioBody = document.getElementById('inventario-body');
+        const inventarioError = document.getElementById('inventario-error');
+        const nombreModeloInput = document.getElementById('nombre-modelo');
+        const fotoProductoInput = document.getElementById('foto-producto');
+        const talleInput = document.getElementById('talle');
+        const stockInput = document.getElementById('stock');
+        const addTalleButton = document.getElementById('add-talle-button');
+        const tallesList = document.getElementById('talles-list');
+        const guardarProductoButton = document.getElementById('guardar-producto-button');
+        const newProductMessage = document.getElementById('new-product-message');
 
-        // Formulario de añadir producto
-        const addProductForm = document.getElementById('add-product-form');
-        const nombreAddInput = document.getElementById('nombre-add');
-        // const precioAddInput = document.getElementById('precio-add'); // CAMBIO: Precio eliminado
-        const marcaAddSelect = document.getElementById('marca-add');
-        const fotoAddInput = document.getElementById('foto-add');
-        const btnAddTalle = document.getElementById('btn-add-talle');
-        const nuevoTalleInput = document.getElementById('nuevo-talle');
-        const nuevoStockInput = document.getElementById('nuevo-stock');
-        const tallesAgregadosLista = document.getElementById('talles-agregados-lista');
-        let tallesParaAgregar = []; // Almacena talles/stock para el nuevo producto
+        let tempTalles = []; // Almacena temporalmente los talles antes de guardar el producto
 
-        // Modal de edición
-        const editProductModal = document.getElementById('editProductModal');
-        const closeButtons = document.querySelectorAll('.close-button, .close-button-modal');
-        const editProductForm = document.getElementById('edit-product-form');
-        const editProductIdInput = document.getElementById('edit-product-id');
-        const editCurrentFotoUrlInput = document.getElementById('edit-current-foto-url');
-        const editNombreInput = document.getElementById('edit-nombre');
-        // const editPrecioInput = document.getElementById('edit-precio'); // CAMBIO: Precio eliminado
-        const editMarcaSelect = document.getElementById('edit-marca');
-        const editCurrentFoto = document.getElementById('edit-current-foto');
-        const editFotoInput = document.getElementById('edit-foto');
-
-
-        // --- Funciones de Carga Inicial ---
-
-        // Carga las marcas en los selectores (añadir y editar)
-        async function cargarMarcasEnSelectores() {
-            const selects = [marcaAddSelect, editMarcaSelect];
-            
-            for (const selector of selects) {
-                selector.innerHTML = '<option value="">Cargando marcas...</option>';
-            }
-
-            let { data: marcas, error } = await supabaseClient.from('marcas').select('*').order('nombre', { ascending: true });
-            
-            if (error) {
-                for (const selector of selects) {
-                    selector.innerHTML = '<option value="">Error al cargar</option>';
-                }
-                console.error("Error al cargar marcas:", error);
+        // --- Funciones de Autenticación ---
+        async function handleAuth() {
+            const { data: { user } } = await supabase.auth.getUser(); // Desestructurar user
+            if (user) {
+                authSection.style.display = 'none';
+                productManagementSection.style.display = 'block';
+                loadInitialData(); // Cargar datos si el usuario está logueado
             } else {
-                for (const selector of selects) {
-                    selector.innerHTML = '<option value="" disabled selected>-- Elige una marca --</option>';
-                    marcas.forEach(marca => {
-                        selector.innerHTML += `<option value="${marca.id}">${marca.nombre}</option>`;
-                    });
-                }
+                authSection.style.display = 'block';
+                productManagementSection.style.display = 'none';
             }
         }
 
-        // Muestra el inventario en la tabla principal
-        async function mostrarInventario() {
-            inventarioBody.innerHTML = '<tr><td colspan="4">Cargando inventario...</td></tr>'; // Columnas: Producto, Talles, Acciones
-            
-            // Consultar modelos e incluir sus marcas e inventarios
-            let { data: modelos, error } = await supabaseClient
-                .from('modelos')
-                .select(`
-                    id,
-                    nombre,
-                    foto_url,
-                    marcas ( nombre ),
-                    inventario ( id, talle, cantidad )
-                `)
-                .order('created_at', { ascending: false });
+        loginButton.addEventListener('click', async () => {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            authMessage.textContent = '';
+            try {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                authMessage.textContent = 'Inicio de sesión exitoso.';
+                authMessage.style.color = '#50fa7b'; // Verde para éxito
+                handleAuth();
+            } catch (error) {
+                console.error('Error de inicio de sesión:', error.message);
+                authMessage.textContent = `Error de inicio de sesión: ${error.message}`;
+                authMessage.style.color = '#ff5555'; // Rojo para error
+            }
+        });
 
-            if (error) {
-                inventarioBody.innerHTML = '<tr><td colspan="4">Error al cargar el inventario.</td></tr>';
-                console.error("Error al cargar inventario:", error);
-            } else {
-                inventarioBody.innerHTML = '';
-                if (modelos.length === 0) {
-                    inventarioBody.innerHTML = '<tr><td colspan="4">No hay productos en el inventario.</td></tr>';
+        signupButton.addEventListener('click', async () => {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            authMessage.textContent = '';
+            try {
+                const { error } = await supabase.auth.signUp({ email, password });
+                if (error) throw error;
+                authMessage.textContent = 'Registro exitoso. Revisa tu correo electrónico para confirmar.';
+                authMessage.style.color = '#50fa7b'; // Verde para éxito
+            } catch (error) {
+                console.error('Error de registro:', error.message);
+                authMessage.textContent = `Error de registro: ${error.message}`;
+                authMessage.style.color = '#ff5555'; // Rojo para error
+            }
+        });
+
+        // --- Funciones de Carga de Datos (lectura) ---
+        async function loadMarcas() {
+            try {
+                const { data, error } = await supabase
+                    .from('marcas')
+                    .select('id, nombre');
+
+                if (error) throw error;
+
+                marcaSelect.innerHTML = '<option value="">Selecciona una Marca</option>';
+                data.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.id;
+                    option.textContent = marca.nombre;
+                    marcaSelect.appendChild(option);
+                });
+                marcaError.style.display = 'none';
+            } catch (error) {
+                console.error('Error al cargar marcas:', error.message);
+                marcaError.style.display = 'block';
+                marcaError.textContent = `Error al cargar marcas: ${error.message}`;
+            }
+        }
+
+        async function loadInventario() {
+            try {
+                inventarioBody.innerHTML = '<tr><td colspan="3">Cargando inventario...</td></tr>';
+                const { data, error } = await supabase
+                    .from('inventario')
+                    .select(`
+                        id,
+                        talle,
+                        stock,
+                        modelos (
+                            id,
+                            nombre,
+                            foto_url
+                        )
+                    `);
+
+                if (error) throw error;
+
+                inventarioBody.innerHTML = ''; // Limpiar el mensaje de carga
+
+                if (data.length === 0) {
+                    inventarioBody.innerHTML = '<tr><td colspan="3">No hay productos en el inventario.</td></tr>';
                     return;
                 }
 
-                modelos.forEach(modelo => {
-                    const imageUrl = SUPABASE_URL + '/storage/v1/object/public/fotos-zapatillas/' + modelo.foto_url;
-                    
+                // Agrupar inventario por modelo para mostrar talles y stock
+                const inventarioAgrupado = {};
+                data.forEach(item => {
+                    const modeloId = item.modelos.id;
+                    if (!inventarioAgrupado[modeloId]) {
+                        inventarioAgrupado[modeloId] = {
+                            id: modeloId, // Añadir ID del modelo
+                            nombre: item.modelos.nombre,
+                            foto_url: item.modelos.foto_url,
+                            talles: []
+                        };
+                    }
+                    inventarioAgrupado[modeloId].talles.push({
+                        id: item.id, // ID del registro de inventario
+                        talle: item.talle,
+                        stock: item.stock
+                    });
+                });
+
+                for (const modeloId in inventarioAgrupado) {
+                    const modelo = inventarioAgrupado[modeloId];
+                    const row = document.createElement('tr');
+
+                    // Columna Producto
+                    const productTd = document.createElement('td');
+                    productTd.innerHTML = `
+                        <div class="product-info-cell">
+                            <img src="${modelo.foto_url}" alt="${modelo.nombre}">
+                            <div class="product-details">
+                                <div class="name">${modelo.nombre}</div>
+                            </div>
+                        </div>
+                    `;
+                    row.appendChild(productTd);
+
+                    // Columna Talles y Stock
+                    const tallesTd = document.createElement('td');
                     // Ordenar talles para visualización consistente
-                    const tallesOrdenados = modelo.inventario.sort((a, b) => {
-                        return parseFloat(String(a.talle).replace('us ', '')) - parseFloat(String(b.talle).replace('us ', ''));
+                    const tallesOrdenados = modelo.talles.sort((a, b) => {
+                        const talleA = parseFloat(String(a.talle).replace('us ', ''));
+                        const talleB = parseFloat(String(b.talle).replace('us ', ''));
+                        if (!isNaN(talleA) && !isNaN(talleB)) {
+                            return talleA - talleB;
+                        }
+                        return String(a.talle).localeCompare(String(b.talle));
                     });
 
-                    // Construir el HTML para talles y stock
-                    let tallesHTML = tallesOrdenados.map(item => `
-                        <div class="stock-control">
-                            <span>Talle ${item.talle}:</span>
-                            <input class="stock-input" type="number" value="${item.cantidad}" min="0">
-                            <button class="save-stock-btn" data-inventario-id="${item.id}">Guardar</button>
-                            <button class="delete-stock-btn" data-inventario-id="${item.id}">X</button>
+                    tallesOrdenados.forEach(talle => {
+                        const talleDiv = document.createElement('div');
+                        talleDiv.className = 'stock-control';
+                        talleDiv.innerHTML = `
+                            <span>Talle ${talle.talle}:</span>
+                            <input class="stock-input" type="number" value="${talle.stock}" min="0">
+                            <button class="save-stock-btn" data-inventario-id="${talle.id}">Guardar</button>
+                            <button class="delete-stock-btn" data-inventario-id="${talle.id}">X</button>
+                        `;
+                        tallesTd.appendChild(talleDiv);
+                    });
+
+                    // Botón para añadir nuevo talle a un producto existente
+                    const addTalleToExistingBtn = document.createElement('button');
+                    addTalleToExistingBtn.textContent = 'Añadir Talle';
+                    addTalleToExistingBtn.className = 'add-talle-to-existing-btn';
+                    addTalleToExistingBtn.dataset.modeloId = modelo.id;
+                    tallesTd.appendChild(addTalleToExistingBtn);
+
+                    row.appendChild(tallesTd);
+
+                    // Columna Acciones (Editar/Eliminar Producto)
+                    const actionsTd = document.createElement('td');
+                    actionsTd.innerHTML = `
+                        <div class="action-buttons">
+                            <button class="edit-btn" data-modelo-id="${modelo.id}">Editar Producto</button>
+                            <button class="delete-btn" data-modelo-id="${modelo.id}" data-foto-url="${modelo.foto_url}">Eliminar Producto</button>
                         </div>
-                    `).join('');
-
-                    if (tallesOrdenados.length === 0) {
-                        tallesHTML = 'Sin talles registrados. <button class="add-talle-to-existing-btn" data-modelo-id="${modelo.id}">Añadir Talle</button>';
-                    }
-
-                    const fila = document.createElement('tr');
-                    fila.innerHTML = `
-                        <td>
-                            <div class="product-info-cell">
-                                <img src="${imageUrl}" alt="${modelo.nombre}">
-                                <div class="product-details">
-                                    <div class="name">${modelo.nombre}</div>
-                                    <div class="brand">${modelo.marcas ? modelo.marcas.nombre : 'Sin Marca'}</div>
-                                    </div>
-                            </div>
-                        </td>
-                        <td>${tallesHTML}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="edit-btn" data-modelo-id="${modelo.id}">Editar Producto</button>
-                                <button class="delete-btn" data-modelo-id="${modelo.id}" data-foto-url="${modelo.foto_url}">Eliminar Producto</button>
-                            </div>
-                        </td>
                     `;
-                    inventarioBody.appendChild(fila);
+                    row.appendChild(actionsTd);
+
+                    inventarioBody.appendChild(row);
+                }
+
+                inventarioError.style.display = 'none';
+            } catch (error) {
+                console.error('Error al cargar inventario:', error.message);
+                inventarioBody.innerHTML = '<tr><td colspan="3">Error al cargar el inventario.</td></tr>';
+                inventarioError.style.display = 'block';
+                inventarioError.textContent = `Error al cargar inventario: ${error.message}`;
+            }
+        }
+
+        async function loadInitialData() {
+            await loadMarcas();
+            await loadInventario();
+        }
+
+        // --- Funciones de Añadir Producto y Talles (escritura - necesitarán políticas INSERT/UPDATE) ---
+        addTalleButton.addEventListener('click', () => {
+            const talle = talleInput.value.trim();
+            const stock = parseInt(stockInput.value, 10);
+
+            if (talle && stock >= 0) { // Permitir stock 0
+                tempTalles.push({ talle, stock });
+                renderTempTalles();
+                talleInput.value = '';
+                stockInput.value = '1';
+                document.querySelector('#talles-a-registrar p').style.display = 'none'; // Ocultar mensaje "Aún no has añadido..."
+            } else {
+                alert('Por favor, ingresa un talle y un stock válido (mayor o igual a 0).');
+            }
+        });
+
+        function renderTempTalles() {
+            tallesList.innerHTML = '';
+            if (tempTalles.length === 0) {
+                 document.querySelector('#talles-a-registrar p').style.display = 'block'; // Mostrar mensaje
+            } else {
+                document.querySelector('#talles-a-registrar p').style.display = 'none'; // Ocultar mensaje
+                tempTalles.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${item.talle}: ${item.stock} unidades `;
+                    const removeButton = document.createElement('button');
+                    removeButton.textContent = 'X';
+                    removeButton.style.marginLeft = '10px';
+                    removeButton.style.backgroundColor = '#D32F2F'; // Rojo para eliminar
+                    removeButton.style.color = 'white';
+                    removeButton.style.border = 'none';
+                    removeButton.style.borderRadius = '4px';
+                    removeButton.style.cursor = 'pointer';
+                    removeButton.style.padding = '3px 6px';
+                    removeButton.style.fontSize = '0.8em';
+                    removeButton.onclick = () => {
+                        tempTalles.splice(index, 1);
+                        renderTempTalles();
+                    };
+                    li.appendChild(removeButton);
+                    tallesList.appendChild(li);
                 });
             }
         }
 
-        // Renderiza la lista de talles que se van a añadir a un nuevo producto
-        function renderTallesAgregados() {
-            tallesAgregadosLista.innerHTML = '';
-            if (tallesParaAgregar.length === 0) {
-                tallesAgregadosLista.innerHTML = '<li>Aún no has añadido talles para este producto.</li>';
-            } else {
-                tallesParaAgregar.forEach((item, index) => {
-                    tallesAgregadosLista.innerHTML += `
-                        <li class="talle-agregado-item">
-                            <span>Talle: ${item.talle}</span>
-                            <span>Stock: ${item.stock}</span>
-                            <button class="remove-talle-btn" data-index="${index}">Eliminar</button>
-                        </li>
-                    `;
-                });
-            }
-        }
 
-        // --- Manejo de Eventos ---
+        guardarProductoButton.addEventListener('click', async () => {
+            newProductMessage.textContent = '';
+            const nombreModelo = nombreModeloInput.value.trim();
+            const marcaId = marcaSelect.value;
+            const fotoArchivo = fotoProductoInput.files[0];
 
-        // Evento de Login
-        loginForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            errorMessage.textContent = ''; // Limpiar mensajes de error anteriores
-
-            // Intenta iniciar sesión con email y contraseña
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                errorMessage.textContent = 'Email o contraseña incorrectos.';
-                console.error("Error de autenticación:", error);
-            } else {
-                // Si el login es exitoso, muestra el contenido protegido
-                loginContainer.style.display = 'none';
-                contenidoProtegido.style.display = 'block';
-                // Carga los datos iniciales del panel
-                mostrarInventario();
-                cargarMarcasEnSelectores();
-                renderTallesAgregados(); // Inicializa la lista de talles para agregar
-            }
-        });
-
-        // Evento para añadir talle al formulario de nuevo producto
-        btnAddTalle.addEventListener('click', function() {
-            const talle = nuevoTalleInput.value.trim();
-            const stock = parseInt(nuevoStockInput.value);
-
-            if (!talle || isNaN(stock) || stock < 0) {
-                alert('Ingresa un talle válido y un stock numérico (mayor o igual a 0).');
+            if (!nombreModelo || !marcaId || !fotoArchivo || tempTalles.length === 0) {
+                newProductMessage.textContent = 'Por favor, completa todos los campos, sube una foto y añade al menos un talle.';
+                newProductMessage.style.color = '#ff5555';
                 return;
             }
-
-            // Opcional: Evitar duplicados de talle en la lista temporal
-            if (tallesParaAgregar.some(item => item.talle === talle)) {
-                alert(`El talle "${talle}" ya fue agregado.`);
-                return;
-            }
-
-            tallesParaAgregar.push({ talle: talle, stock: stock });
-            renderTallesAgregados();
-            nuevoTalleInput.value = '';
-            nuevoStockInput.value = '1';
-            nuevoTalleInput.focus();
-        });
-
-        // Evento para eliminar talle de la lista temporal al añadir nuevo producto
-        tallesAgregadosLista.addEventListener('click', function(e) {
-            if (e.target.classList.contains('remove-talle-btn')) {
-                const indexToRemove = parseInt(e.target.dataset.index);
-                tallesParaAgregar.splice(indexToRemove, 1);
-                renderTallesAgregados();
-            }
-        });
-
-
-        // Evento para guardar nuevo producto
-        addProductForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const boton = e.target.querySelector('button[type="submit"]');
-            boton.textContent = 'Guardando...';
-            boton.disabled = true;
 
             try {
-                const nombre = nombreAddInput.value;
-                // const precio = parseFloat(precioAddInput.value); // CAMBIO: Precio eliminado
-                const marcaId = marcaAddSelect.value;
-                const fotoFile = fotoAddInput.files[0];
+                // 1. Subir la foto a Supabase Storage
+                const filePath = `${Date.now()}-${fotoArchivo.name.replace(/\s+/g, '-')}`; // Limpiar nombre de archivo
+                // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('fotos-productos') // ¡CORREGIDO AQUÍ!
+                    .upload(filePath, fotoArchivo);
 
-                if (!nombre || !marcaId) { // CAMBIO: Validacion sin precio
-                    throw new Error("Por favor, completa todos los campos (nombre y marca).");
-                }
-                if (tallesParaAgregar.length === 0) {
-                    throw new Error("Debes añadir al menos un talle con stock para el producto.");
-                }
-                if (!fotoFile) {
-                    throw new Error("No se ha seleccionado una foto para el producto.");
-                }
-
-                // Subir la imagen a Supabase Storage
-                const cleanFileName = fotoFile.name.replace(/\s+/g, '-').replace(/[^\w.-]/g, ''); // Limpiar nombre de archivo
-                const fileName = `${Date.now()}-${cleanFileName}`;
-                const { error: uploadError } = await supabaseClient.storage.from('fotos-zapatillas').upload(fileName, fotoFile);
                 if (uploadError) throw uploadError;
 
-                // Insertar el nuevo modelo en la tabla 'modelos'
-                const { data: nuevoModelo, error: modeloError } = await supabaseClient
-                    .from('modelos')
-                    .insert([{ nombre, foto_url: fileName, marca_id: marcaId }]) // CAMBIO: Precio eliminado
-                    .select(); // Asegúrate de que retorna el objeto insertado para obtener el ID
-                
-                if (modeloError) throw modeloError;
-                if (!nuevoModelo || nuevoModelo.length === 0) throw new Error("No se pudo obtener el ID del nuevo modelo.");
-                
-                const nuevoModeloId = nuevoModelo[0].id;
+                // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
+                const fotoUrl = supabase.storage.from('fotos-productos').getPublicUrl(filePath).data.publicUrl; // ¡CORREGIDO AQUÍ!
 
-                // Insertar los talles y stock en la tabla 'inventario'
-                const filasParaInventario = tallesParaAgregar.map(item => ({ talle: item.talle, cantidad: item.stock, modelo_id: nuevoModeloId }));
-                const { error: inventarioError } = await supabaseClient.from('inventario').insert(filasParaInventario);
-                if (inventarioError) throw inventarioError;
-                
-                alert('¡Producto añadido con éxito!');
-                // Resetear el formulario y actualizar la vista
-                addProductForm.reset();
-                tallesParaAgregar = [];
-                renderTallesAgregados();
-                mostrarInventario(); // Recargar el inventario para ver el nuevo producto
-                
+                // 2. Insertar el nuevo modelo en la tabla 'modelos'
+                const { data: modeloData, error: modeloError } = await supabase
+                    .from('modelos')
+                    .insert([
+                        {
+                            nombre: nombreModelo,
+                            marca_id: marcaId, // Usar marca_id como en tu esquema
+                            foto_url: fotoUrl
+                        }
+                    ])
+                    .select();
+
+                if (modeloError) throw modeloError;
+
+                const nuevoModeloId = modeloData[0].id;
+
+                // 3. Insertar los talles y stock en la tabla 'inventario'
+                const inventarioItems = tempTalles.map(item => ({
+                    modelo_id: nuevoModeloId, // Usar modelo_id como en tu esquema
+                    talle: item.talle,
+                    stock: item.stock
+                }));
+
+                const { error: inventarioErrorInsert } = await supabase
+                    .from('inventario')
+                    .insert(inventarioItems);
+
+                if (inventarioErrorInsert) throw inventarioErrorInsert;
+
+                newProductMessage.textContent = '¡Producto guardado exitosamente!';
+                newProductMessage.style.color = '#50fa7b';
+
+                // Limpiar formulario
+                nombreModeloInput.value = '';
+                marcaSelect.value = '';
+                fotoProductoInput.value = '';
+                tempTalles = [];
+                renderTempTalles();
+                loadInventario(); // Recargar el inventario para ver el nuevo producto
             } catch (error) {
-                alert(`Error al guardar el producto: ${error.message}`);
-                console.error('Error:', error);
-            } finally {
-                boton.textContent = 'Guardar Nuevo Producto';
-                boton.disabled = false;
+                console.error('Error al guardar producto:', error.message);
+                newProductMessage.textContent = `Error al guardar producto: ${error.message}`;
+                newProductMessage.style.color = '#ff5555';
             }
         });
-        
-        // Event Listener para la tabla de inventario (delegación de eventos)
-        inventarioBody.addEventListener('click', async function(e) {
+
+        // --- Event Listener para la tabla de inventario (delegación de eventos) ---
+        inventarioBody.addEventListener('click', async (e) => {
             // Manejar botón de Guardar Stock
             if (e.target.classList.contains('save-stock-btn')) {
                 const boton = e.target;
                 const inventarioId = boton.dataset.inventarioId;
-                const nuevoStock = parseInt(boton.parentElement.querySelector('.stock-input').value);
+                const nuevoStock = parseInt(boton.parentElement.querySelector('.stock-input').value, 10);
                 
                 if (isNaN(nuevoStock) || nuevoStock < 0) {
-                    alert('El stock debe ser un número positivo.');
+                    alert('El stock debe ser un número positivo o cero.');
                     return;
                 }
 
                 boton.textContent = '...';
-                boton.disabled = true; // Deshabilitar para evitar múltiples clics
+                boton.disabled = true; 
                 try {
-                    const { error } = await supabaseClient.from('inventario').update({ cantidad: nuevoStock }).eq('id', inventarioId);
+                    const { error } = await supabase.from('inventario').update({ stock: nuevoStock }).eq('id', inventarioId);
                     if (error) throw error;
-                    boton.textContent = '✔'; // Muestra un check de éxito
-                    setTimeout(() => { boton.textContent = 'Guardar'; boton.disabled = false; }, 1500); // Vuelve al estado normal
+                    boton.textContent = '✔'; 
+                    setTimeout(() => { boton.textContent = 'Guardar'; boton.disabled = false; }, 1500); 
                 } catch (error) {
                     alert('Error al actualizar stock.');
-                    console.error('Error:', error);
+                    console.error('Error al actualizar stock:', error);
                     boton.textContent = 'Guardar';
                     boton.disabled = false;
                 }
@@ -544,21 +640,72 @@
                     boton.textContent = '...';
                     boton.disabled = true;
                     try {
-                        const { error } = await supabaseClient.from('inventario').delete().eq('id', inventarioId);
+                        const { error } = await supabase.from('inventario').delete().eq('id', inventarioId);
                         if (error) throw error;
                         alert('Talle eliminado con éxito.');
-                        mostrarInventario(); // Recargar la tabla para reflejar el cambio
+                        loadInventario(); // Recargar la tabla para reflejar el cambio
                     } catch (error) {
                         alert('Error al eliminar talle.');
-                        console.error('Error:', error);
+                        console.error('Error al eliminar talle:', error);
                         boton.textContent = 'X';
                         boton.disabled = false;
                     }
                 }
             }
 
+            // Manejar botón de Añadir nuevo talle para un producto existente
+            if (e.target.classList.contains('add-talle-to-existing-btn')) {
+                const boton = e.target;
+                const modeloId = boton.dataset.modeloId;
+                // Aquí podrías abrir un pequeño modal o pedir los datos directamente
+                const talle = prompt('Ingresa el nuevo talle (ej: 42, US 10):');
+                if (!talle) return;
+                const stock = parseInt(prompt('Ingresa el stock para este talle (número):'), 10);
+                if (isNaN(stock) || stock < 0) {
+                    alert('Stock inválido.');
+                    return;
+                }
+
+                boton.textContent = '...';
+                boton.disabled = true;
+                try {
+                    // Verifica si el talle ya existe para este modelo
+                    const { data: existingTalle, error: checkError } = await supabase
+                        .from('inventario')
+                        .select('id')
+                        .eq('modelo_id', modeloId)
+                        .eq('talle', talle)
+                        .single();
+
+                    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 es "no rows found"
+                        throw checkError;
+                    }
+
+                    if (existingTalle) {
+                        alert(`El talle "${talle}" ya existe para este producto. Actualiza el stock directamente.`);
+                    } else {
+                        // Si no existe, lo inserta
+                        const { error: insertError } = await supabase
+                            .from('inventario')
+                            .insert([{ modelo_id: modeloId, talle: talle, stock: stock }]);
+                        
+                        if (insertError) throw insertError;
+                        alert('Talle añadido con éxito!');
+                    }
+                    
+                    loadInventario(); // Recargar el inventario
+                } catch (error) {
+                    alert(`Error al añadir talle: ${error.message}`);
+                    console.error('Error al añadir talle:', error);
+                } finally {
+                    boton.textContent = 'Añadir Talle';
+                    boton.disabled = false;
+                }
+            }
+
+
             // Manejar botón de Eliminar Producto
-            if (e.target.classList.contains('delete-btn') && e.target.id !== 'realizar-pedido-btn') { // Añadido id !== para evitar conflicto
+            if (e.target.classList.contains('delete-btn')) { 
                 const boton = e.target;
                 const modeloId = boton.dataset.modeloId;
                 const fotoUrl = boton.dataset.fotoUrl; // Nombre de archivo de la foto
@@ -569,27 +716,28 @@
                         boton.disabled = true;
 
                         // Primero, eliminar inventario relacionado
-                        const { error: deleteInventarioError } = await supabaseClient.from('inventario').delete().eq('modelo_id', modeloId);
+                        const { error: deleteInventarioError } = await supabase.from('inventario').delete().eq('modelo_id', modeloId);
                         if (deleteInventarioError) throw deleteInventarioError;
 
                         // Luego, eliminar el modelo
-                        const { error: deleteModeloError } = await supabaseClient.from('modelos').delete().eq('id', modeloId);
+                        const { error: deleteModeloError } = await supabase.from('modelos').delete().eq('id', modeloId);
                         if (deleteModeloError) throw deleteModeloError;
 
                         // Finalmente, eliminar la foto del Storage
                         if (fotoUrl) {
-                            const { error: deleteFotoError } = await supabaseClient.storage.from('fotos-zapatillas').remove([fotoUrl]);
+                            // Extraer solo el nombre del archivo de la URL pública de Supabase
+                            const fileNameInStorage = fotoUrl.split('/').pop();
+                            const { error: deleteFotoError } = await supabase.storage.from('fotos-productos').remove([fileNameInStorage]); // ¡CORREGIDO AQUÍ!
                             if (deleteFotoError) {
                                 console.warn("Advertencia: No se pudo eliminar la foto del storage.", deleteFotoError);
-                                // No lanzar error crítico si la foto no se pudo eliminar, el producto ya está fuera de la DB
                             }
                         }
                         
                         alert('¡Producto eliminado con éxito!');
-                        mostrarInventario(); // Recargar el inventario
+                        loadInventario(); // Recargar el inventario
                     } catch (error) {
                         alert(`Error al eliminar producto: ${error.message}`);
-                        console.error('Error:', error);
+                        console.error('Error al eliminar producto:', error);
                         boton.textContent = 'Eliminar Producto';
                         boton.disabled = false;
                     }
@@ -605,13 +753,23 @@
 
 
         // --- Funciones del Modal de Edición ---
+        const editProductModal = document.getElementById('editProductModal'); // Asegúrate de que este elemento exista en tu HTML
+        const closeButtons = document.querySelectorAll('.close-button, .close-button-modal'); // Asegúrate de que estos botones existan
+        const editProductForm = document.getElementById('edit-product-form'); // Asegúrate de que este formulario exista
+        const editProductIdInput = document.getElementById('edit-product-id');
+        const editCurrentFotoUrlInput = document.getElementById('edit-current-foto-url');
+        const editNombreInput = document.getElementById('edit-nombre');
+        const editMarcaSelect = document.getElementById('edit-marca');
+        const editCurrentFoto = document.getElementById('edit-current-foto');
+        const editFotoInput = document.getElementById('edit-foto');
+
 
         // Función para abrir el modal de edición y cargar datos
         async function abrirModalEdicion(modeloId) {
             // Consultar los datos del modelo específico
-            const { data: modelo, error } = await supabaseClient
+            const { data: modelo, error } = await supabase
                 .from('modelos')
-                .select(`id, nombre, foto_url, marca_id, marcas ( nombre )`) // CAMBIO: Precio eliminado
+                .select(`id, nombre, foto_url, marca_id, marcas ( nombre )`)
                 .eq('id', modeloId)
                 .single(); // Usa .single() para un solo registro
 
@@ -625,117 +783,123 @@
             editProductIdInput.value = modelo.id;
             editCurrentFotoUrlInput.value = modelo.foto_url;
             editNombreInput.value = modelo.nombre;
-            // editPrecioInput.value = modelo.precio; // CAMBIO: Precio eliminado
+            editMarcaSelect.value = modelo.marca_id; // Selecciona la marca actual
 
-            // Cargar marcas en el selector del modal y seleccionar la marca actual
-            await cargarMarcasEnSelectores(); // Asegurarse de que las marcas están cargadas
-            editMarcaSelect.value = modelo.marca_id;
+            // Muestra la imagen actual
+            if (modelo.foto_url) {
+                editCurrentFoto.src = modelo.foto_url; // La URL ya es pública
+                editCurrentFoto.style.display = 'block';
+            } else {
+                editCurrentFoto.src = '';
+                editCurrentFoto.style.display = 'none';
+            }
+            editFotoInput.value = ''; // Limpiar el input de archivo por seguridad
 
-            // Mostrar la imagen actual
-            const imageUrl = SUPABASE_URL + '/storage/v1/object/public/fotos-zapatillas/' + modelo.foto_url;
-            editCurrentFoto.src = imageUrl;
-
-            editProductModal.style.display = 'flex'; // Muestra el modal (flex para centrar)
+            // Mostrar el modal
+            editProductModal.style.display = 'flex'; // Usamos flex para centrarlo con align-items/justify-content
         }
 
-        // Cierra el modal de edición
+        // Eventos para cerrar el modal
         closeButtons.forEach(button => {
             button.addEventListener('click', () => {
                 editProductModal.style.display = 'none';
-                editProductForm.reset(); // Limpia el formulario al cerrar
             });
         });
 
-        // Cierra el modal si se hace clic fuera del contenido
+        // Cerrar modal al hacer clic fuera del contenido
         window.addEventListener('click', function(event) {
             if (event.target == editProductModal) {
                 editProductModal.style.display = 'none';
-                editProductForm.reset(); // Limpia el formulario al cerrar
             }
         });
 
-        // Evento para guardar los cambios del producto desde el modal
+
+        // Evento para guardar cambios del producto editado
         editProductForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const boton = e.target.querySelector('button[type="submit"]');
             boton.textContent = 'Guardando...';
             boton.disabled = true;
 
-            const modeloId = editProductIdInput.value;
-            const nuevoNombre = editNombreInput.value;
-            // const nuevoPrecio = parseFloat(editPrecioInput.value); // CAMBIO: Precio eliminado
-            const nuevaMarcaId = editMarcaSelect.value;
-            const nuevaFotoFile = editFotoInput.files[0];
-            let nuevaFotoUrl = editCurrentFotoUrlInput.value; // Por defecto, mantiene la foto actual
-
             try {
-                if (!nuevoNombre || !nuevaMarcaId) { // CAMBIO: Validacion sin precio
+                const modeloId = editProductIdInput.value;
+                const nombre = editNombreInput.value;
+                const marcaId = editMarcaSelect.value;
+                const nuevaFotoFile = editFotoInput.files[0];
+                let fotoUrlToSave = editCurrentFotoUrlInput.value; // URL actual de la foto
+
+                if (!nombre || !marcaId) {
                     throw new Error("Por favor, completa todos los campos (nombre y marca).");
                 }
-                
-                // Si hay una nueva foto, subirla y actualizar la URL
+
+                // Si hay una nueva foto seleccionada, subirla
                 if (nuevaFotoFile) {
-                    const cleanFileName = nuevaFotoFile.name.replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
-                    const fileName = `${Date.now()}-${cleanFileName}`;
-                    const { error: uploadError } = await supabaseClient.storage.from('fotos-zapatillas').upload(fileName, nuevaFotoFile);
-                    if (uploadError) throw uploadError;
-                    
-                    // Eliminar la foto antigua si existe y es diferente a la nueva
-                    if (editCurrentFotoUrlInput.value && editCurrentFotoUrlInput.value !== fileName) {
-                        const { error: deleteOldFotoError } = await supabaseClient.storage.from('fotos-zapatillas').remove([editCurrentFotoUrlInput.value]);
-                        if (deleteOldFotoError) {
+                    // Extraer el nombre del archivo antiguo para eliminarlo si es necesario
+                    const oldFileName = fotoUrlToSave ? fotoUrlToSave.split('/').pop() : null;
+
+                    // Eliminar foto antigua si existe y no es la por defecto
+                    if (oldFileName && oldFileName !== 'default_image.png') { // Ajusta el nombre si tienes una imagen por defecto
+                         const { error: deleteOldFotoError } = await supabase.storage.from('fotos-productos').remove([oldFileName]); // ¡CORREGIDO AQUÍ!
+                         if (deleteOldFotoError) {
                             console.warn("Advertencia: No se pudo eliminar la foto antigua del storage.", deleteOldFotoError);
-                        }
+                         }
                     }
-                    nuevaFotoUrl = fileName;
+                    
+                    const cleanFileName = nuevaFotoFile.name.replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
+                    const newFileName = `${Date.now()}-${cleanFileName}`;
+                    // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
+                    const { error: uploadError } = await supabase.storage.from('fotos-productos').upload(newFileName, nuevaFotoFile); // ¡CORREGIDO AQUÍ!
+                    if (uploadError) throw uploadError;
+
+                    // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
+                    fotoUrlToSave = supabase.storage.from('fotos-productos').getPublicUrl(newFileName).data.publicUrl; // ¡CORREGIDO AQUÍ!
                 }
 
                 // Actualizar el modelo en la tabla 'modelos'
-                const { error: updateModeloError } = await supabaseClient
+                const { error: updateError } = await supabase
                     .from('modelos')
-                    .update({
-                        nombre: nuevoNombre,
-                        // precio: nuevoPrecio, // CAMBIO: Precio eliminado
-                        marca_id: nuevaMarcaId,
-                        foto_url: nuevaFotoUrl
-                    })
+                    .update({ nombre, foto_url: fotoUrlToSave, marca_id: marcaId })
                     .eq('id', modeloId);
-
-                if (updateModeloError) throw updateModeloError;
-
+                
+                if (updateError) throw updateError;
+                
                 alert('¡Producto actualizado con éxito!');
-                editProductModal.style.display = 'none'; // Cierra el modal
-                editProductForm.reset(); // Limpia el formulario
-                mostrarInventario(); // Recarga el inventario para ver los cambios
+                editProductModal.style.display = 'none'; // Cerrar el modal
+                loadInventario(); // Recargar el inventario para ver los cambios
                 
             } catch (error) {
                 alert(`Error al actualizar el producto: ${error.message}`);
-                console.error('Error:', error);
+                console.error('Error al actualizar producto:', error);
             } finally {
                 boton.textContent = 'Guardar Cambios';
                 boton.disabled = false;
             }
         });
 
-        // --- Inicio al cargar la página ---
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Verifica la sesión al cargar la página
-            const { data: { session } } = await supabaseClient.auth.getSession();
+        // --- Inicialización al cargar la página ---
+        // Verificar si ya hay una sesión activa de Supabase
+        supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
-                // Si hay sesión activa, muestra el contenido protegido
-                loginContainer.style.display = 'none';
-                contenidoProtegido.style.display = 'block';
-                // Carga los datos
-                mostrarInventario();
-                cargarMarcasEnSelectores();
-                renderTallesAgregados();
+                authSection.style.display = 'none';
+                productManagementSection.style.display = 'block';
+                loadInitialData(); // Cargar datos si el usuario ya está logueado
             } else {
-                // Si no hay sesión, muestra el formulario de login
-                loginContainer.style.display = 'block';
-                contenidoProtegido.style.display = 'none';
+                authSection.style.display = 'block';
+                productManagementSection.style.display = 'none';
             }
         });
 
+        // Escuchar cambios de autenticación de Supabase (ej. si el usuario cierra sesión)
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                authSection.style.display = 'block';
+                productManagementSection.style.display = 'none';
+            } else if (event === 'SIGNED_IN') {
+                 authSection.style.display = 'none';
+                 productManagementSection.style.display = 'block';
+                 loadInitialData(); // Cargar datos si se acaba de iniciar sesión
+            }
+        });
     </script>
 </body>
 </html>
