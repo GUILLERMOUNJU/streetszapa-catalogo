@@ -266,6 +266,36 @@
         </section>
     </div>
 
+    <div id="editProductModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>Editar Producto</h3>
+            <form id="edit-product-form">
+                <input type="hidden" id="edit-product-id">
+                <input type="hidden" id="edit-current-foto-url">
+                <div class="form-group">
+                    <label for="edit-nombre">Nombre del Modelo</label>
+                    <input type="text" id="edit-nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-marca">Marca</label>
+                    <select id="edit-marca" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Imagen Actual:</label>
+                    <img id="edit-current-foto" src="" alt="Imagen del producto" style="max-width: 150px; display: block; margin-top: 10px;">
+                    <label for="edit-foto" style="margin-top: 15px;">Cambiar Foto (opcional)</label>
+                    <input type="file" id="edit-foto" accept="image/*">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="close-button-modal">Cancelar</button>
+                    <button type="submit">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // ** TUS CREDENCIALES DE SUPABASE **
         const supabaseUrl = 'https://ilauxmesrvylqtluidpv.supabase.co';
@@ -418,7 +448,7 @@
 
                     // Construir la URL pública de la foto.
                     // Esto maneja casos donde foto_url podría ser solo el path o ya la URL completa.
-                    const publicFotoUrl = modelo.foto_url.startsWith('http') 
+                    const publicFotoUrl = modelo.foto_url && modelo.foto_url.startsWith('http') 
                         ? modelo.foto_url 
                         : supabase.storage.from('fotos-productos').getPublicUrl(modelo.foto_url).data.publicUrl;
 
@@ -795,7 +825,7 @@
 
             // Muestra la imagen actual
             // Construir la URL pública de la foto para el modal de edición también
-            const publicFotoUrl = modelo.foto_url.startsWith('http') 
+            const publicFotoUrl = modelo.foto_url && modelo.foto_url.startsWith('http') 
                 ? modelo.foto_url 
                 : supabase.storage.from('fotos-productos').getPublicUrl(modelo.foto_url).data.publicUrl;
 
