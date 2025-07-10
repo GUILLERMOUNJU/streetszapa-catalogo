@@ -328,7 +328,12 @@
 
         let tempTalles = []; // Almacena temporalmente los talles antes de guardar el producto
 
-        // --- Funciones de Autenticación ---
+        // Nombre del bucket de Storage para las fotos (Ajustado para admin.html)
+        const STORAGE_BUCKET_NAME = 'fotos-zapatillas'; 
+
+        /**
+         * Maneja la autenticación del usuario.
+         */
         async function handleAuth() {
             const { data: { user } } = await supabase.auth.getUser(); // Desestructurar user
             if (user) {
@@ -444,13 +449,15 @@
 
                 for (const modeloId in inventarioAgrupado) {
                     const modelo = inventarioAgrupado[modeloId];
-                    const row = document.createElement('tr');
-
+                    
                     // Construir la URL pública de la foto.
-                    // Esto maneja casos donde foto_url podría ser solo el path o ya la URL completa.
-                    const publicFotoUrl = modelo.foto_url && modelo.foto_url.startsWith('http') 
-                        ? modelo.foto_url 
-                        : supabase.storage.from('fotos-productos').getPublicUrl(modelo.foto_url).data.publicUrl;
+                    // Usamos el nombre del archivo de la DB directamente,
+                    // ya que la captura muestra que están en la raíz del bucket 'fotos-zapatillas'.
+                    const publicFotoUrl = modelo.foto_url 
+                        ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(modelo.foto_url).data.publicUrl
+                        : 'https://placehold.co/80x80/cccccc/000000?text=No+Img'; // Fallback si no hay foto_url
+
+                    const row = document.createElement('tr');
 
                     // Columna Producto
                     const productTd = document.createElement('td');
@@ -468,8 +475,8 @@
                     const tallesTd = document.createElement('td');
                     // Ordenar talles para visualización consistente
                     const tallesOrdenados = modelo.talles.sort((a, b) => {
-                        const talleA = parseFloat(String(a.talle).replace('us ', ''));
-                        const talleB = parseFloat(String(b.talle).replace('us ', ''));
+                        const talleA = parseFloat(String(a.talle).replace(/[^0-9.]/g, ''));
+                        const talleB = parseFloat(String(b.talle).replace(/[^0-9.]/g, ''));
                         if (!isNaN(talleA) && !isNaN(talleB)) {
                             return talleA - talleB;
                         }
@@ -585,15 +592,15 @@
             try {
                 // 1. Subir la foto a Supabase Storage
                 const filePath = `${Date.now()}-${fotoArchivo.name.replace(/\s+/g, '-')}`; // Limpiar nombre de archivo
-                // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
+                // CAMBIO CLAVE: Usar el bucket 'fotos-zapatillas'
                 const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('fotos-productos') // ¡CORREGIDO AQUÍ!
+                    .from(STORAGE_BUCKET_NAME) 
                     .upload(filePath, fotoArchivo);
 
                 if (uploadError) throw uploadError;
 
-                // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
-                const fotoUrl = supabase.storage.from('fotos-productos').getPublicUrl(filePath).data.publicUrl; // ¡CORREGIDO AQUÍ!
+                // CAMBIO CLAVE: Obtener la URL pública usando el nombre del archivo directamente
+                const fotoUrl = supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(filePath).data.publicUrl; 
 
                 // 2. Insertar el nuevo modelo en la tabla 'modelos'
                 const { data: modeloData, error: modeloError } = await supabase
@@ -602,7 +609,7 @@
                         {
                             nombre: nombreModelo,
                             marca_id: marcaId, // Usar marca_id como en tu esquema
-                            foto_url: fotoUrl
+                            foto_url: filePath // Guardar solo el nombre del archivo en la DB
                         }
                     ])
                     .select();
@@ -765,7 +772,8 @@
                         if (fotoUrl) {
                             // Extraer solo el nombre del archivo de la URL pública de Supabase
                             const fileNameInStorage = fotoUrl.split('/').pop();
-                            const { error: deleteFotoError } = await supabase.storage.from('fotos-productos').remove([fileNameInStorage]); // ¡CORREGIDO AQUÍ!
+                            // CAMBIO CLAVE: Usar el bucket 'fotos-zapatillas' para eliminar
+                            const { error: deleteFotoError } = await supabase.storage.from(STORAGE_BUCKET_NAME).remove([fileNameInStorage]); 
                             if (deleteFotoError) {
                                 console.warn("Advertencia: No se pudo eliminar la foto del storage.", deleteFotoError);
                             }
@@ -824,10 +832,12 @@
             editMarcaSelect.value = modelo.marca_id; // Selecciona la marca actual
 
             // Muestra la imagen actual
-            // Construir la URL pública de la foto para el modal de edición también
-            const publicFotoUrl = modelo.foto_url && modelo.foto_url.startsWith('http') 
-                ? modelo.foto_url 
-                : supabase.storage.from('fotos-productos').getPublicUrl(modelo.foto_url).data.publicUrl;
+            // Construir la URL pública de la foto para el modal de edición
+            // Usamos el nombre del archivo de la DB directamente,
+            // ya que la captura muestra que están en la raíz del bucket 'fotos-zapatillas'.
+            const publicFotoUrl = modelo.foto_url 
+                ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(modelo.foto_url).data.publicUrl
+                : 'https://placehold.co/150x150/cccccc/000000?text=No+Img'; // Fallback si no hay foto_url
 
             if (publicFotoUrl) {
                 editCurrentFoto.src = publicFotoUrl; 
@@ -869,7 +879,7 @@
                 const nombre = editNombreInput.value;
                 const marcaId = editMarcaSelect.value;
                 const nuevaFotoFile = editFotoInput.files[0];
-                let fotoUrlToSave = editCurrentFotoUrlInput.value; // URL actual de la foto
+                let fotoUrlToSave = editCurrentFotoUrlInput.value; // URL actual de la foto (nombre del archivo)
 
                 if (!nombre || !marcaId) {
                     throw new Error("Por favor, completa todos los campos (nombre y marca).");
@@ -877,12 +887,13 @@
 
                 // Si hay una nueva foto seleccionada, subirla
                 if (nuevaFotoFile) {
-                    // Extraer el nombre del archivo antiguo para eliminarlo si es necesario
-                    const oldFileName = fotoUrlToSave ? fotoUrlToSave.split('/').pop() : null;
-
-                    // Eliminar foto antigua si existe y no es la por defecto
+                    // Extraer solo el nombre del archivo antiguo para eliminarlo si es necesario
+                    const oldFileName = fotoUrlToSave; // Ya es solo el nombre del archivo
+                    
+                    // Eliminar foto antigua si existe (no es la por defecto)
                     if (oldFileName && oldFileName !== 'default_image.png') { // Ajusta el nombre si tienes una imagen por defecto
-                         const { error: deleteOldFotoError } = await supabase.storage.from('fotos-productos').remove([oldFileName]); // ¡CORREGIDO AQUÍ!
+                         // CAMBIO CLAVE: Usar el bucket 'fotos-zapatillas' para eliminar
+                         const { error: deleteOldFotoError } = await supabase.storage.from(STORAGE_BUCKET_NAME).remove([oldFileName]); 
                          if (deleteOldFotoError) {
                             console.warn("Advertencia: No se pudo eliminar la foto antigua del storage.", deleteOldFotoError);
                          }
@@ -890,12 +901,11 @@
                     
                     const cleanFileName = nuevaFotoFile.name.replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
                     const newFileName = `${Date.now()}-${cleanFileName}`;
-                    // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
-                    const { data: uploadData, error: uploadError } = await supabase.storage.from('fotos-productos').upload(newFileName, nuevaFotoFile); // ¡CORREGIDO AQUÍ!
+                    // CAMBIO CLAVE: Usar el bucket 'fotos-zapatillas' para subir
+                    const { data: uploadData, error: uploadError } = await supabase.storage.from(STORAGE_BUCKET_NAME).upload(newFileName, nuevaFotoFile); 
                     if (uploadError) throw uploadError;
 
-                    // CORRECCIÓN CLAVE: El nombre del bucket debe ser 'fotos-productos' (con guion medio)
-                    fotoUrlToSave = supabase.storage.from('fotos-productos').getPublicUrl(newFileName).data.publicUrl; // ¡CORREGIDO AQUÍ!
+                    fotoUrlToSave = newFileName; // Guardar solo el nombre del nuevo archivo en la DB
                 }
 
                 // Actualizar el modelo en la tabla 'modelos'
