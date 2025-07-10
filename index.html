@@ -107,6 +107,7 @@
                 // Apply filter if a talle is provided and is not empty
                 if (filterTalle !== null && filterTalle.trim() !== '') {
                     // Usamos .ilike para coincidencia parcial e insensible a mayúsculas/minúsculas
+                    // El filtro buscará el texto ingresado en cualquier parte del campo 'talle'
                     query = query.ilike('talle', `%${filterTalle.trim()}%`); 
                 }
 
@@ -146,8 +147,18 @@
                     
                     // Construir la URL pública de la foto.
                     // Asume que foto_url en la DB es solo el nombre del archivo (ej: 'nombre.jpg')
-                    const publicFotoUrl = product.foto_url 
-                        ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(product.foto_url).data.publicUrl
+                    // y que los archivos están en la raíz del bucket o en una carpeta 'public/'
+                    let fotoPathInBucket = product.foto_url;
+                    // Si tu URL en la DB ya es la URL completa, no la modifiques.
+                    // Si es solo el nombre del archivo, y sabes que está en 'public/', prefija.
+                    // La forma más segura es que la DB guarde 'public/nombre_archivo.jpg'
+                    // Pero si solo guarda 'nombre_archivo.jpg', esta es la corrección:
+                    if (fotoPathInBucket && !fotoPathInBucket.startsWith('public/')) {
+                        fotoPathInBucket = `public/${fotoPathInBucket}`;
+                    }
+
+                    const publicFotoUrl = fotoPathInBucket 
+                        ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(fotoPathInBucket).data.publicUrl
                         : 'https://placehold.co/400x300/cccccc/000000?text=No+Img'; // Fallback si no hay foto_url
 
                     const productCard = document.createElement('div');
