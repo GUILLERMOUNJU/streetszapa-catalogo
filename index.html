@@ -3,239 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streetszapa - Catálogo de Productos</title>
+    <title>Catálogo de Productos - StreetZapato</title>
+    <!-- Incluye Supabase JS SDK desde un CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Incluye Tailwind CSS desde un CDN para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-        :root {
-            --background-color: #121212;
-            --card-background: #1E1E1E;
-            --text-color: #FFFFFF;
-            --text-secondary-color: #B3B3B3;
-            --accent-color: #FFD700;
-            --shadow: 0 4px 15px rgba(0,0,0,0.2);
-            --border-color: #333333;
+        /* Puedes añadir estilos personalizados aquí si lo deseas, aunque Tailwind ya cubre mucho */
+        body {
+            font-family: 'Inter', sans-serif;
         }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--background-color); margin: 0; padding: 20px; color: var(--text-color); }
-        header { padding: 20px 0; text-align: center; margin-bottom: 20px; }
-        #logo-streetszapa { max-width: 120px; }
-        .catalogo-general-container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
-
-        /* Estilos para el buscador */
-        .search-container {
-            margin-bottom: 30px;
-            text-align: center;
+        /* Estilo para la imagen de placeholder si no carga */
+        img[src="https://placehold.co/150x150/cccccc/000000?text=No+Img"] {
+            border: 1px dashed #ccc;
         }
-        #search-input {
-            width: 100%;
-            max-width: 400px;
-            padding: 12px 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background-color: var(--card-background);
-            color: var(--text-color);
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-        #search-input::placeholder {
-            color: var(--text-secondary-color);
-        }
-        #search-input:focus {
-            border-color: var(--accent-color);
-        }
-
-        .talle-section { margin-bottom: 40px; }
-        .talle-section-header { font-size: 2.2rem; font-weight: 700; color: var(--accent-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 25px; }
-        .productos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
-        .zapatilla-card { 
-            background-color: var(--card-background); 
-            border: 1px solid var(--border-color); 
-            border-radius: 12px; 
-            box-shadow: var(--shadow); 
-            overflow: hidden; 
-            text-align: center; 
-            display: flex; 
-            flex-direction: column; 
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .zapatilla-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-        .zapatilla-card img { width: 100%; height: 250px; object-fit: cover; }
-        .card-content { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
-        .card-content h2 { font-size: 1.3rem; font-weight: 600; flex-grow: 1; margin-top: 5px; margin-bottom: 10px; }
-        .card-content .marca { font-size: 0.95rem; color: var(--text-secondary-color); margin-bottom: 5px; }
-        .stock-info { font-size: 0.9em; color: var(--text-secondary-color); margin-top: 5px; }
-        .talle-stock-item { 
-            display: inline-block; 
-            background-color: #333; 
-            color: white; 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            margin: 3px; 
-            font-size: 0.85em; 
-            white-space: nowrap; 
-        }
-        .talle-stock-item.no-stock { background-color: #666; opacity: 0.7; }
-
-        footer { background: #1E1E1E; text-align: center; padding: 25px; margin-top: 40px; border-top: 1px solid var(--border-color); }
-        .social-icons a { margin: 0 15px; } 
-        .social-icons img { width: 30px; transition: transform 0.2s; }
-        .social-icons a:hover img { transform: scale(1.1); }
     </style>
 </head>
-<body>
-    <header>
-        <img id="logo-streetszapa" src="https://i.imgur.com/G5Zua4s.png" alt="Logo de Streetszapa">
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+    <header class="bg-gray-800 shadow-lg py-4 px-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-yellow-400">StreetZapato</h1>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="#" class="text-gray-300 hover:text-yellow-400 transition duration-300">Inicio</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-yellow-400 transition duration-300">Productos</a></li>
+                    <li><a href="#" class="text-gray-300 hover:text-yellow-400 transition duration-300">Contacto</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
-    <div class="catalogo-general-container">
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Buscar por talle (ej: 41, us 9.5) o marca (ej: Nike)">
+
+    <main class="container mx-auto p-6 flex-grow">
+        <h2 class="text-4xl font-extrabold text-center text-yellow-400 mb-10">Nuestro Catálogo</h2>
+
+        <!-- Sección de Filtros -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-md mb-8 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <label for="talle-filter" class="text-lg font-semibold text-gray-200">Filtrar por Talle:</label>
+            <input type="number" id="talle-filter" placeholder="Ej: 41" class="p-3 rounded-md bg-gray-700 border border-gray-600 text-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full sm:w-40">
+            <button id="apply-filter-button" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-md transition duration-300 shadow-lg">Aplicar Filtro</button>
+            <button id="clear-filter-button" class="bg-gray-600 hover:bg-gray-700 text-gray-100 font-bold py-3 px-6 rounded-md transition duration-300 shadow-lg">Limpiar Filtro</button>
         </div>
 
-        <main id="catalogo-container">
-            <p>Cargando catálogo...</p>
-        </main>
-    </div>
-    <footer>
-        <p><strong>Dirección:</strong> Lizandro de la Torre 938, San Salvador de Jujuy</p>
-        <p><strong>Teléfono:</strong> 388 468-9497</p>
-        <div class="social-icons">
-            <a href="https://www.facebook.com/telasjujuy" target="_blank" rel="noopener noreferrer"><img src="https://i.imgur.com/8p5z5YF.png" alt="Facebook"></a>
-            <a href="https://www.instagram.com/streetszapas/" target="_blank" rel="noopener noreferrer"><img src="https://i.imgur.com/vHAPDoE.png" alt="Instagram"></a>
-            <a href="#" target="_blank" rel="noopener noreferrer"><img src="https://i.imgur.com/11sFC1g.png" alt="TikTok"></a>
+        <!-- Contenedor de Productos -->
+        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Los productos se cargarán aquí -->
+            <p class="col-span-full text-center text-gray-400 text-xl" id="loading-message">Cargando productos...</p>
+            <p class="col-span-full text-center text-red-500 text-xl hidden" id="error-message">Error al cargar los productos.</p>
+            <p class="col-span-full text-center text-gray-400 text-xl hidden" id="no-results-message">No se encontraron productos con ese talle.</p>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 shadow-inner py-6 px-6 mt-10">
+        <div class="container mx-auto text-center text-gray-400">
+            <p>&copy; 2024 StreetZapato. Todos los derechos reservados.</p>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        (function() {
-            var SUPABASE_URL = 'https://ilauxmesrvylqtluidpv.supabase.co';
-            var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFhZXMuc3J2eWxxdGx1aWRwdiIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
-            var supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // ** TUS CREDENCIALES DE SUPABASE **
+        const supabaseUrl = 'https://ilauxmesrvylqtluidpv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
 
-            var catalogoContainer = document.getElementById('catalogo-container');
-            var searchInput = document.getElementById('search-input'); 
+        // Crea la instancia de Supabase usando el objeto global 'supabase' del CDN
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-            let allProducts = []; 
+        // --- Elementos del DOM ---
+        const productListDiv = document.getElementById('product-list');
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessage = document.getElementById('error-message');
+        const noResultsMessage = document.getElementById('no-results-message');
+        const talleFilterInput = document.getElementById('talle-filter');
+        const applyFilterButton = document.getElementById('apply-filter-button');
+        const clearFilterButton = document.getElementById('clear-filter-button');
 
-            async function iniciarCatalogo() {
-                try {
-                    const { data: modelos, error: modelosError } = await supabaseClient
-                        .from('modelos')
-                        .select(`
+        /**
+         * Fetches and displays products from Supabase.
+         * @param {number|null} filterTalle - Optional talle to filter by.
+         */
+        async function loadProducts(filterTalle = null) {
+            loadingMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            noResultsMessage.classList.add('hidden');
+            productListDiv.innerHTML = ''; // Clear previous products
+
+            try {
+                let query = supabase
+                    .from('inventario')
+                    .select(`
+                        id,
+                        talle,
+                        stock,
+                        modelos (
                             id,
                             nombre,
                             foto_url,
-                            marcas ( nombre ),
-                            inventario ( talle, stock ) 
-                        `); // *** CORREGIDO: SELECCIONA 'stock' EN LUGAR DE 'cantidad' ***
+                            marcas ( nombre )
+                        )
+                    `);
 
-                    if (modelosError) throw modelosError;
-
-                    allProducts = modelos;
-                    
-                    renderizarCatalogo(allProducts);
-
-                } catch (e) {
-                    catalogoContainer.innerHTML = '<h2>Ha ocurrido un error al cargar el catálogo:</h2><p style="color:red;">' + e.message + '</p>';
-                    console.error(e);
+                // Apply filter if a talle is provided
+                if (filterTalle !== null && !isNaN(filterTalle) && filterTalle > 0) {
+                    query = query.eq('talle', filterTalle);
                 }
-            }
 
-            function renderizarCatalogo(productosARenderizar) {
-                if (!productosARenderizar || productosARenderizar.length === 0) {
-                    catalogoContainer.innerHTML = '<p>No hay productos disponibles con el criterio de búsqueda actual.</p>';
+                const { data, error } = await query;
+
+                if (error) throw error;
+
+                loadingMessage.classList.add('hidden');
+
+                if (data.length === 0) {
+                    noResultsMessage.classList.remove('hidden');
                     return;
                 }
 
-                catalogoContainer.innerHTML = '';
-
-                const productosPorMarca = {};
-                productosARenderizar.forEach(modelo => {
-                    const marcaNombre = modelo.marcas ? modelo.marcas.nombre : 'Sin Marca';
-                    if (!productosPorMarca[marcaNombre]) {
-                        productosPorMarca[marcaNombre] = [];
+                // Group inventory by model to display talles and stock for each product
+                const productsGroupedByModel = {};
+                data.forEach(item => {
+                    const modeloId = item.modelos.id;
+                    if (!productsGroupedByModel[modeloId]) {
+                        productsGroupedByModel[modeloId] = {
+                            id: modeloId,
+                            nombre: item.modelos.nombre,
+                            foto_url: item.modelos.foto_url,
+                            marca_nombre: item.modelos.marcas.nombre,
+                            talles: []
+                        };
                     }
-                    productosPorMarca[marcaNombre].push(modelo);
-                });
-
-                const marcasOrdenadas = Object.keys(productosPorMarca).sort();
-
-                marcasOrdenadas.forEach(marca => {
-                    const seccionMarca = document.createElement('section');
-                    seccionMarca.className = 'talle-section';
-                    seccionMarca.innerHTML = `<h2 class="talle-section-header">${marca}</h2><div class="productos-grid"></div>`;
-                    const productosGrid = seccionMarca.querySelector('.productos-grid');
-
-                    productosPorMarca[marca].forEach(zapatilla => {
-                        const imageUrl = SUPABASE_URL + '/storage/v1/object/public/fotos-zapatillas/' + zapatilla.foto_url;
-                        
-                        let tallesStockHTML = '';
-                        if (zapatilla.inventario && zapatilla.inventario.length > 0) {
-                            const tallesOrdenados = zapatilla.inventario.sort((a, b) => {
-                                const talleA = parseFloat(String(a.talle).toLowerCase().replace('us ', ''));
-                                const talleB = parseFloat(String(b.talle).toLowerCase().replace('us ', ''));
-                                return talleA - talleB;
-                            });
-                            
-                            tallesOrdenados.forEach(item => {
-                                const tieneStock = item.stock > 0; // *** CORREGIDO: USA 'item.stock' ***
-                                const talleDisplay = String(item.talle).startsWith('us ') ? item.talle.toUpperCase() : item.talle;
-                                tallesStockHTML += `<span class="talle-stock-item ${!tieneStock ? 'no-stock' : ''}">${talleDisplay} (${item.stock})</span>`; // *** CORREGIDO: USA 'item.stock' ***
-                            });
-                        } else {
-                            tallesStockHTML = '<span class="talle-stock-item no-stock">Sin stock registrado</span>';
-                        }
-
-                        productosGrid.innerHTML += `
-                            <div class="zapatilla-card">
-                                <img src="${imageUrl}" alt="${zapatilla.nombre}">
-                                <div class="card-content">
-                                    <p class="marca">${marca}</p>
-                                    <h2>${zapatilla.nombre}</h2>
-                                    <div class="stock-info">${tallesStockHTML}</div>
-                                </div>
-                            </div>
-                        `;
+                    productsGroupedByModel[modeloId].talles.push({
+                        talle: item.talle,
+                        stock: item.stock
                     });
-                    catalogoContainer.appendChild(seccionMarca);
                 });
-            }
 
-            function filtrarCatalogo() {
-                const searchTerm = searchInput.value.toLowerCase().trim();
-                
-                if (searchTerm === '') {
-                    renderizarCatalogo(allProducts);
-                    return;
+                // Render each unique product (model)
+                for (const modeloId in productsGroupedByModel) {
+                    const product = productsGroupedByModel[modeloId];
+                    
+                    // Construct the public URL for the photo.
+                    // This handles cases where foto_url might be just the path or already the full URL.
+                    const publicFotoUrl = product.foto_url && product.foto_url.startsWith('http') 
+                        ? product.foto_url 
+                        : supabase.storage.from('fotos-productos').getPublicUrl(product.foto_url).data.publicUrl;
+
+                    const productCard = document.createElement('div');
+                    productCard.className = 'bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition duration-500 hover:scale-105';
+                    productCard.innerHTML = `
+                        <img src="${publicFotoUrl}" alt="${product.nombre}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x300/cccccc/000000?text=No+Img';">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-semibold text-yellow-400 mb-2">${product.nombre}</h3>
+                            <p class="text-gray-400 text-sm mb-4">${product.marca_nombre}</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                ${product.talles.sort((a, b) => parseFloat(String(a.talle).replace('us ', '')) - parseFloat(String(b.talle).replace('us ', ''))).map(t => `
+                                    <span class="bg-gray-700 text-gray-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                        Talle ${t.talle} (${t.stock} unid.)
+                                    </span>
+                                `).join('')}
+                            </div>
+                            <button class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-300">Ver Detalles</button>
+                        </div>
+                    `;
+                    productListDiv.appendChild(productCard);
                 }
 
-                const filteredProducts = allProducts.filter(product => {
-                    const marcaNombre = product.marcas ? product.marcas.nombre.toLowerCase() : '';
-                    
-                    if (marcaNombre.includes(searchTerm)) {
-                        return true;
-                    }
-
-                    if (product.inventario && product.inventario.length > 0) {
-                        return product.inventario.some(item => {
-                            const talleString = String(item.talle).toLowerCase();
-                            return talleString.includes(searchTerm);
-                        });
-                    }
-                    return false;
-                });
-
-                renderizarCatalogo(filteredProducts);
+            } catch (error) {
+                console.error('Error al cargar productos:', error.message);
+                loadingMessage.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+                errorMessage.textContent = `Error al cargar productos: ${error.message}`;
             }
+        }
 
-            searchInput.addEventListener('input', filtrarCatalogo);
+        // --- Event Listeners para el filtro ---
+        applyFilterButton.addEventListener('click', () => {
+            const talle = parseInt(talleFilterInput.value, 10);
+            loadProducts(talle);
+        });
 
-            document.addEventListener('DOMContentLoaded', iniciarCatalogo);
+        clearFilterButton.addEventListener('click', () => {
+            talleFilterInput.value = ''; // Clear the input
+            loadProducts(); // Load all products
+        });
 
-        })(); 
+        // Cargar productos al iniciar la página
+        loadProducts();
     </script>
 </body>
 </html>
