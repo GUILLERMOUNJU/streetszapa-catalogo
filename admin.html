@@ -532,9 +532,15 @@
         }
 
         // --- Funciones de Añadir Producto y Talles (escritura - necesitarán políticas INSERT/UPDATE) ---
-        addTalleButton.addEventListener('click', () => {
+        addTalleButton.addEventListener('click', async () => { // Hacemos async para await en la carga de marcas
             const talle = talleInput.value.trim();
             const stock = parseInt(stockInput.value, 10);
+
+            if (!nombreModeloInput.value.trim() || !marcaSelect.value || !fotoProductoInput.files[0] || tempTalles.length === 0) {
+                newProductMessage.textContent = 'Por favor, completa todos los campos, sube una foto y añade al menos un talle.';
+                newProductMessage.style.color = '#ff5555';
+                return;
+            }
 
             if (talle && stock >= 0) { // Permitir stock 0
                 tempTalles.push({ talle, stock });
@@ -592,15 +598,15 @@
             try {
                 // 1. Subir la foto a Supabase Storage
                 const filePath = `${Date.now()}-${fotoArchivo.name.replace(/\s+/g, '-')}`; // Limpiar nombre de archivo
-                // CAMBIO CLAVE: Usar el bucket 'fotos-zapatillas'
+                // Usar el bucket 'fotos-zapatillas'
                 const { data: uploadData, error: uploadError } = await supabase.storage
                     .from(STORAGE_BUCKET_NAME) 
                     .upload(filePath, fotoArchivo);
 
                 if (uploadError) throw uploadError;
 
-                // CAMBIO CLAVE: Obtener la URL pública usando el nombre del archivo directamente
-                const fotoUrl = supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(filePath).data.publicUrl; 
+                // Guardar solo el nombre del archivo en la columna foto_url de la tabla 'modelos'
+                const fotoUrlToSaveInDB = filePath; 
 
                 // 2. Insertar el nuevo modelo en la tabla 'modelos'
                 const { data: modeloData, error: modeloError } = await supabase
@@ -608,8 +614,8 @@
                     .insert([
                         {
                             nombre: nombreModelo,
-                            marca_id: marcaId, // Usar marca_id como en tu esquema
-                            foto_url: filePath // Guardar solo el nombre del archivo en la DB
+                            marca_id: marcaId, 
+                            foto_url: fotoUrlToSaveInDB
                         }
                     ])
                     .select();
@@ -620,7 +626,7 @@
 
                 // 3. Insertar los talles y stock en la tabla 'inventario'
                 const inventarioItems = tempTalles.map(item => ({
-                    modelo_id: nuevoModeloId, // Usar modelo_id como en tu esquema
+                    modelo_id: nuevoModeloId, 
                     talle: item.talle,
                     stock: item.stock
                 }));
@@ -771,8 +777,8 @@
                         // Finalmente, eliminar la foto del Storage
                         if (fotoUrl) {
                             // Extraer solo el nombre del archivo de la URL pública de Supabase
-                            const fileNameInStorage = fotoUrl.split('/').pop();
-                            // CAMBIO CLAVE: Usar el bucket 'fotos-zapatillas' para eliminar
+                            const fileNameInStorage = fotoUrl; // Ya es solo el nombre del archivo
+                            // Usar el bucket 'fotos-zapatillas' para eliminar
                             const { error: deleteFotoError } = await supabase.storage.from(STORAGE_BUCKET_NAME).remove([fileNameInStorage]); 
                             if (deleteFotoError) {
                                 console.warn("Advertencia: No se pudo eliminar la foto del storage.", deleteFotoError);
@@ -848,6 +854,27 @@
             }
             editFotoInput.value = ''; // Limpiar el input de archivo por seguridad
 
+            // Cargar las marcas en el selector del modal
+            try {
+                const { data: marcasData, error: marcasError } = await supabase
+                    .from('marcas')
+                    .select('id, nombre');
+
+                if (marcasError) throw marcasError;
+
+                editMarcaSelect.innerHTML = ''; // Limpiar opciones existentes
+                marcasData.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.id;
+                    option.textContent = marca.nombre;
+                    editMarcaSelect.appendChild(option);
+                });
+                editMarcaSelect.value = modelo.marca_id; // Seleccionar la marca actual del modelo
+            } catch (marcasError) {
+                console.error('Error al cargar marcas en el modal de edición:', marcasError.message);
+                // Aquí podrías mostrar un mensaje de error en el modal si lo deseas
+            }
+
             // Mostrar el modal
             editProductModal.style.display = 'flex'; // Usamos flex para centrarlo con align-items/justify-content
         }
@@ -879,7 +906,7 @@
                 const nombre = editNombreInput.value;
                 const marcaId = editMarcaSelect.value;
                 const nuevaFotoFile = editFotoInput.files[0];
-                let fotoUrlToSave = editCurrentFotoUrlInput.value; // URL actual de la foto (nombre del archivo)
+                let fotoUrlToSave = editCurrentFotoUrlInput.value; // Nombre del archivo actual
 
                 if (!nombre || !marcaId) {
                     throw new Error("Por favor, completa todos los campos (nombre y marca).");
@@ -891,8 +918,8 @@
                     const oldFileName = fotoUrlToSave; // Ya es solo el nombre del archivo
                     
                     // Eliminar foto antigua si existe (no es la por defecto)
-                    if (oldFileName && oldFileName !== 'default_image.png') { // Ajusta el nombre si tienes una imagen por defecto
-                         // CAMBIO CLAVE: Usar el bucket 'fotos-zapatillas' para eliminar
+                    if (oldFileName && oldFileName !== 'default_image.png') { 
+                         // Usar el bucket 'fotos-zapatillas' para eliminar
                          const { error: deleteOldFotoError } = await supabase.storage.from(STORAGE_BUCKET_NAME).remove([oldFileName]); 
                          if (deleteOldFotoError) {
                             console.warn("Advertencia: No se pudo eliminar la foto antigua del storage.", deleteOldFotoError);
@@ -901,7 +928,7 @@
                     
                     const cleanFileName = nuevaFotoFile.name.replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
                     const newFileName = `${Date.now()}-${cleanFileName}`;
-                    // CAMBIO CLAVE: Usar el bucket 'fotos-zapatillas' para subir
+                    // Usar el bucket 'fotos-zapatillas' para subir
                     const { data: uploadData, error: uploadError } = await supabase.storage.from(STORAGE_BUCKET_NAME).upload(newFileName, nuevaFotoFile); 
                     if (uploadError) throw uploadError;
 
