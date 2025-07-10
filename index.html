@@ -77,7 +77,6 @@
         const clearFilterButton = document.getElementById('clear-filter-button');
 
         // Nombre del bucket de Storage para las fotos
-        // CAMBIO CLAVE: Se ajusta al nombre del bucket que usaba tu código anterior
         const STORAGE_BUCKET_NAME = 'fotos-zapatillas'; 
 
         /**
@@ -147,16 +146,10 @@
                     const product = productsGroupedByModel[modeloId];
                     
                     // Construir la URL pública de la foto.
-                    // Asume que foto_url en la DB es solo el nombre del archivo (ej: 'nombre.jpg')
-                    // y que los archivos están en la carpeta 'public/' dentro del bucket 'fotos-zapatillas'
-                    let fotoPathInBucket = product.foto_url;
-                    // Aseguramos que la ruta comience con 'public/' si no lo hace, ya que es la estructura común de Supabase
-                    if (fotoPathInBucket && !fotoPathInBucket.startsWith('public/')) {
-                        fotoPathInBucket = `public/${fotoPathInBucket}`;
-                    }
-
-                    const publicFotoUrl = fotoPathInBucket 
-                        ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(fotoPathInBucket).data.publicUrl
+                    // Ahora, simplemente usamos el nombre del archivo de la DB directamente,
+                    // ya que la captura muestra que están en la raíz del bucket.
+                    const publicFotoUrl = product.foto_url 
+                        ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(product.foto_url).data.publicUrl
                         : 'https://placehold.co/400x300/cccccc/000000?text=No+Img'; // Fallback si no hay foto_url
 
                     const productCard = document.createElement('div');
