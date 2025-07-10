@@ -77,7 +77,8 @@
         const clearFilterButton = document.getElementById('clear-filter-button');
 
         // Nombre del bucket de Storage para las fotos
-        const STORAGE_BUCKET_NAME = 'fotos-productos'; 
+        // CAMBIO CLAVE: Se ajusta al nombre del bucket que usaba tu código anterior
+        const STORAGE_BUCKET_NAME = 'fotos-zapatillas'; 
 
         /**
          * Fetches and displays products from Supabase.
@@ -147,12 +148,9 @@
                     
                     // Construir la URL pública de la foto.
                     // Asume que foto_url en la DB es solo el nombre del archivo (ej: 'nombre.jpg')
-                    // y que los archivos están en la raíz del bucket o en una carpeta 'public/'
+                    // y que los archivos están en la carpeta 'public/' dentro del bucket 'fotos-zapatillas'
                     let fotoPathInBucket = product.foto_url;
-                    // Si tu URL en la DB ya es la URL completa, no la modifiques.
-                    // Si es solo el nombre del archivo, y sabes que está en 'public/', prefija.
-                    // La forma más segura es que la DB guarde 'public/nombre_archivo.jpg'
-                    // Pero si solo guarda 'nombre_archivo.jpg', esta es la corrección:
+                    // Aseguramos que la ruta comience con 'public/' si no lo hace, ya que es la estructura común de Supabase
                     if (fotoPathInBucket && !fotoPathInBucket.startsWith('public/')) {
                         fotoPathInBucket = `public/${fotoPathInBucket}`;
                     }
