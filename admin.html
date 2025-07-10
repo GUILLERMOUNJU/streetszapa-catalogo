@@ -532,24 +532,21 @@
         }
 
         // --- Funciones de Añadir Producto y Talles (escritura - necesitarán políticas INSERT/UPDATE) ---
-        addTalleButton.addEventListener('click', async () => { // Hacemos async para await en la carga de marcas
+        addTalleButton.addEventListener('click', () => {
             const talle = talleInput.value.trim();
             const stock = parseInt(stockInput.value, 10);
 
-            if (!nombreModeloInput.value.trim() || !marcaSelect.value || !fotoProductoInput.files[0] || tempTalles.length === 0) {
-                newProductMessage.textContent = 'Por favor, completa todos los campos, sube una foto y añade al menos un talle.';
-                newProductMessage.style.color = '#ff5555';
-                return;
-            }
-
+            // Validar solo los campos de talle y stock para añadir a la lista temporal
             if (talle && stock >= 0) { // Permitir stock 0
                 tempTalles.push({ talle, stock });
                 renderTempTalles();
                 talleInput.value = '';
                 stockInput.value = '1';
                 document.querySelector('#talles-a-registrar p').style.display = 'none'; // Ocultar mensaje "Aún no has añadido..."
+                newProductMessage.textContent = ''; // Limpiar mensaje de error si se añade talle
             } else {
-                alert('Por favor, ingresa un talle y un stock válido (mayor o igual a 0).');
+                newProductMessage.textContent = 'Por favor, ingresa un talle y un stock válido (mayor o igual a 0) para añadir a la lista.';
+                newProductMessage.style.color = '#ff5555';
             }
         });
 
@@ -589,8 +586,24 @@
             const marcaId = marcaSelect.value;
             const fotoArchivo = fotoProductoInput.files[0];
 
-            if (!nombreModelo || !marcaId || !fotoArchivo || tempTalles.length === 0) {
-                newProductMessage.textContent = 'Por favor, completa todos los campos, sube una foto y añade al menos un talle.';
+            // Validación completa antes de guardar el producto
+            if (!nombreModelo) {
+                newProductMessage.textContent = 'Por favor, ingresa el Nombre del Modelo.';
+                newProductMessage.style.color = '#ff5555';
+                return;
+            }
+            if (!marcaId) {
+                newProductMessage.textContent = 'Por favor, selecciona una Marca.';
+                newProductMessage.style.color = '#ff5555';
+                return;
+            }
+            if (!fotoArchivo) {
+                newProductMessage.textContent = 'Por favor, sube una Foto del Producto.';
+                newProductMessage.style.color = '#ff5555';
+                return;
+            }
+            if (tempTalles.length === 0) {
+                newProductMessage.textContent = 'Por favor, añade al menos un Talle y Stock.';
                 newProductMessage.style.color = '#ff5555';
                 return;
             }
