@@ -85,6 +85,7 @@
          * @param {string|null} filterTalle - Optional talle (as text) to filter by.
          */
         async function loadProducts(filterTalle = null) {
+            console.log('loadProducts called with filterTalle:', filterTalle); // Added log
             loadingMessage.classList.remove('hidden');
             errorMessage.classList.add('hidden');
             noResultsMessage.classList.add('hidden');
@@ -117,18 +118,28 @@
                 }
 
                 const { data, error } = await query;
+                console.log('Supabase query returned. Data length:', data ? data.length : 'null/undefined', 'Error:', error); // Added log
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase query error:', error); // Log the actual error object
+                    throw error;
+                }
 
                 loadingMessage.classList.add('hidden');
 
-                if (data.length === 0) {
+                if (!data || data.length === 0) {
                     noResultsMessage.classList.remove('hidden');
+                    if (trimmedFilterTalle === '') {
+                        noResultsMessage.textContent = 'No hay productos disponibles en este momento.';
+                    } else {
+                        noResultsMessage.textContent = 'No se encontraron productos con ese talle.';
+                    }
                     return;
                 }
 
                 // Group inventory by model to display talles and stock for each product
                 const productsGroupedByModel = {};
+                let productsRenderedCount = 0; // To track how many products are actually rendered
                 data.forEach(item => {
                     // Verificaciones más robustas para asegurar que los datos del modelo y la marca existen
                     const modelo = item.modelos;
@@ -191,10 +202,18 @@
                         </div>
                     `;
                     productListDiv.appendChild(productCard);
+                    productsRenderedCount++; // Increment count
+                }
+                console.log('Total products rendered:', productsRenderedCount); // Added log
+
+                // If no products were rendered after grouping and filtering, show no results message
+                if (productsRenderedCount === 0 && data.length > 0) {
+                    noResultsMessage.classList.remove('hidden');
+                    noResultsMessage.textContent = 'No se encontraron productos válidos para mostrar después de la verificación de datos.';
                 }
 
             } catch (error) {
-                console.error('Error al cargar productos:', error.message);
+                console.error('Error al cargar productos (en catch):', error.message);
                 loadingMessage.classList.add('hidden');
                 errorMessage.classList.remove('hidden');
                 errorMessage.textContent = `Error al cargar productos: ${error.message}`;
