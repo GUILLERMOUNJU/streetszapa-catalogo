@@ -93,8 +93,7 @@
             try {
                 let query = supabase
                     .from('inventario')
-                    // CAMBIO CLAVE: Aseguramos que 'modelos' y 'marcas' se seleccionen correctamente
-                    // y que el alias 'nombre' de marcas esté disponible
+                    // Aseguramos que 'modelos' y 'marcas' se seleccionen correctamente
                     .select(`
                         id,
                         talle,
@@ -107,7 +106,7 @@
                         )
                     `);
 
-                // CAMBIO CLAVE: Aseguramos que filterTalle sea una cadena antes de intentar trim()
+                // Aseguramos que filterTalle sea una cadena antes de intentar trim()
                 const trimmedFilterTalle = filterTalle === null ? '' : String(filterTalle).trim();
 
                 // Apply filter if a talle is provided and is not empty
@@ -131,20 +130,21 @@
                 // Group inventory by model to display talles and stock for each product
                 const productsGroupedByModel = {};
                 data.forEach(item => {
-                    // CAMBIO CLAVE: Verificar si item.modelos existe antes de acceder a sus propiedades
-                    if (!item.modelos) {
-                        console.warn(`Registro de inventario con ID ${item.id} no tiene modelo asociado o no se pudo cargar.`);
-                        return; // Saltar este item si no tiene modelo
+                    // Verificaciones más robustas para asegurar que los datos del modelo y la marca existen
+                    const modelo = item.modelos;
+                    if (!modelo || !modelo.id || !modelo.nombre || !modelo.foto_url) {
+                        console.warn(`Registro de inventario con ID ${item.id} tiene datos de modelo incompletos o nulos. Saltando.`);
+                        return; // Saltar este item si los datos del modelo son incompletos
                     }
 
-                    const modeloId = item.modelos.id;
+                    const modeloId = modelo.id;
                     if (!productsGroupedByModel[modeloId]) {
                         productsGroupedByModel[modeloId] = {
                             id: modeloId,
-                            nombre: item.modelos.nombre,
-                            foto_url: item.modelos.foto_url,
-                            // CAMBIO CLAVE: Verificar si item.modelos.marcas existe antes de acceder a 'nombre'
-                            marca_nombre: item.modelos.marcas ? item.modelos.marcas.nombre : 'Desconocida',
+                            nombre: modelo.nombre,
+                            foto_url: modelo.foto_url,
+                            // Verificar explícitamente si 'marcas' y 'nombre' existen
+                            marca_nombre: (modelo.marcas && modelo.marcas.nombre) ? modelo.marcas.nombre : 'Desconocida',
                             talles: []
                         };
                     }
