@@ -56,6 +56,7 @@
     <footer class="bg-gray-800 shadow-inner py-6 px-6 mt-10">
         <div class="container mx-auto text-center text-gray-400">
             <p>&copy; 2024 StreetZapato. Todos los derechos reservados.</p>
+            <p>REALIZADO POR INNOA, 3886865482</p> <!-- Línea de crédito añadida -->
         </div>
     </footer>
 
@@ -92,6 +93,8 @@
             try {
                 let query = supabase
                     .from('inventario')
+                    // CAMBIO CLAVE: Aseguramos que 'modelos' y 'marcas' se seleccionen correctamente
+                    // y que el alias 'nombre' de marcas esté disponible
                     .select(`
                         id,
                         talle,
@@ -104,11 +107,14 @@
                         )
                     `);
 
+                // CAMBIO CLAVE: Aseguramos que filterTalle sea una cadena antes de intentar trim()
+                const trimmedFilterTalle = filterTalle === null ? '' : String(filterTalle).trim();
+
                 // Apply filter if a talle is provided and is not empty
-                if (filterTalle !== null && filterTalle.trim() !== '') {
+                if (trimmedFilterTalle !== '') {
                     // Usamos .ilike para coincidencia parcial e insensible a mayúsculas/minúsculas
                     // El filtro buscará el texto ingresado en cualquier parte del campo 'talle'
-                    query = query.ilike('talle', `%${filterTalle.trim()}%`); 
+                    query = query.ilike('talle', `%${trimmedFilterTalle}%`); 
                 }
 
                 const { data, error } = await query;
@@ -125,13 +131,20 @@
                 // Group inventory by model to display talles and stock for each product
                 const productsGroupedByModel = {};
                 data.forEach(item => {
+                    // CAMBIO CLAVE: Verificar si item.modelos existe antes de acceder a sus propiedades
+                    if (!item.modelos) {
+                        console.warn(`Registro de inventario con ID ${item.id} no tiene modelo asociado o no se pudo cargar.`);
+                        return; // Saltar este item si no tiene modelo
+                    }
+
                     const modeloId = item.modelos.id;
                     if (!productsGroupedByModel[modeloId]) {
                         productsGroupedByModel[modeloId] = {
                             id: modeloId,
                             nombre: item.modelos.nombre,
                             foto_url: item.modelos.foto_url,
-                            marca_nombre: item.modelos.marcas.nombre,
+                            // CAMBIO CLAVE: Verificar si item.modelos.marcas existe antes de acceder a 'nombre'
+                            marca_nombre: item.modelos.marcas ? item.modelos.marcas.nombre : 'Desconocida',
                             talles: []
                         };
                     }
