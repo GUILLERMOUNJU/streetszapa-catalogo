@@ -106,8 +106,8 @@
                         )
                     `);
 
-                // Aseguramos que filterTalle sea una cadena antes de intentar trim()
-                const trimmedFilterTalle = filterTalle === null ? '' : String(filterTalle).trim();
+                // CAMBIO CLAVE: Aseguramos que filterTalle sea una cadena antes de intentar trim()
+                const trimmedFilterTalle = (filterTalle === null || typeof filterTalle !== 'string') ? '' : filterTalle.trim();
 
                 // Apply filter if a talle is provided and is not empty
                 if (trimmedFilterTalle !== '') {
@@ -203,7 +203,7 @@
 
         // --- Event Listeners para el filtro ---
         applyFilterButton.addEventListener('click', () => {
-            const talle = talleFilterInput.value.trim(); // Obtener el valor como texto
+            const talle = talleFilterInput.value; // Obtener el valor sin trim() inicial
             loadProducts(talle);
         });
 
