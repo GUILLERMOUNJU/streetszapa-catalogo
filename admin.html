@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - StreetZapato</title>
-    <!-- Incluye Supabase JS SDK desde un CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Aquí va tu CSS actual, como el que se ve en la Captura de pantalla 2025-07-09 160608.png */
@@ -217,7 +216,6 @@
             <div>
                 <label for="marca-select">Marca</label>
                 <select id="marca-select">
-                    <!-- Las marcas se cargarán aquí dinámicamente -->
                     <option value="">Cargando marcas...</option>
                 </select>
                 <p id="marca-error" class="error-message" style="display:none;">Error al cargar</p>
@@ -240,8 +238,7 @@
             <div id="talles-a-registrar">
                 <h4>Talles a registrar:</h4>
                 <ul id="talles-list">
-                    <!-- Aquí se listarán los talles añadidos temporalmente -->
-                </ul>
+                    </ul>
                 <p>Aún no has añadido talles para este producto.</p>
             </div>
             <button id="guardar-producto-button">Guardar Nuevo Producto</button>
@@ -406,6 +403,8 @@
         async function loadInventario() {
             try {
                 inventarioBody.innerHTML = '<tr><td colspan="3">Cargando inventario...</td></tr>';
+                inventarioError.style.display = 'none'; // Asegurarse de que el mensaje de error anterior esté oculto
+
                 const { data, error } = await supabase
                     .from('inventario')
                     .select(`
@@ -431,6 +430,12 @@
                 // Agrupar inventario por modelo para mostrar talles y stock
                 const inventarioAgrupado = {};
                 data.forEach(item => {
+                    // ** VERIFICACIÓN CRUCIAL: Si item.modelos es null, se salta este item **
+                    if (!item.modelos || !item.modelos.id || !item.modelos.nombre || !item.modelos.foto_url) {
+                        console.warn(`Registro de inventario con ID ${item.id} tiene datos de modelo incompletos o nulos. Saltando este registro para evitar errores de visualización.`);
+                        return; // Saltar este item si los datos del modelo son incompletos
+                    }
+
                     const modeloId = item.modelos.id;
                     if (!inventarioAgrupado[modeloId]) {
                         inventarioAgrupado[modeloId] = {
@@ -446,6 +451,12 @@
                         stock: item.stock
                     });
                 });
+
+                // Si después de filtrar, no quedan productos agrupados, mostrar mensaje
+                if (Object.keys(inventarioAgrupado).length === 0) {
+                    inventarioBody.innerHTML = '<tr><td colspan="3">No hay productos válidos en el inventario después de la verificación de datos.</td></tr>';
+                    return;
+                }
 
                 for (const modeloId in inventarioAgrupado) {
                     const modelo = inventarioAgrupado[modeloId];
@@ -700,298 +711,245 @@
                 const boton = e.target;
                 const inventarioId = boton.dataset.inventarioId;
 
-                if (confirm('¿Estás seguro de que quieres eliminar este talle y su stock?')) {
-                    boton.textContent = '...';
-                    boton.disabled = true;
-                    try {
-                        const { error } = await supabase.from('inventario').delete().eq('id', inventarioId);
-                        if (error) throw error;
-                        alert('Talle eliminado con éxito.');
-                        loadInventario(); // Recargar la tabla para reflejar el cambio
-                    } catch (error) {
-                        alert('Error al eliminar talle.');
-                        console.error('Error al eliminar talle:', error);
-                        boton.textContent = 'X';
-                        boton.disabled = false;
-                    }
-                }
-            }
-
-            // Manejar botón de Añadir nuevo talle para un producto existente
-            if (e.target.classList.contains('add-talle-to-existing-btn')) {
-                const boton = e.target;
-                const modeloId = boton.dataset.modeloId;
-                // Aquí podrías abrir un pequeño modal o pedir los datos directamente
-                const talle = prompt('Ingresa el nuevo talle (ej: 42, US 10):');
-                if (!talle) return;
-                const stock = parseInt(prompt('Ingresa el stock para este talle (número):'), 10);
-                if (isNaN(stock) || stock < 0) {
-                    alert('Stock inválido.');
+                if (!confirm('¿Estás seguro de que quieres eliminar este talle y stock? Esta acción no se puede deshacer.')) {
                     return;
                 }
-
+                
                 boton.textContent = '...';
                 boton.disabled = true;
                 try {
-                    // Verifica si el talle ya existe para este modelo
-                    const { data: existingTalle, error: checkError } = await supabase
-                        .from('inventario')
-                        .select('id')
-                        .eq('modelo_id', modeloId)
-                        .eq('talle', talle)
-                        .single();
-
-                    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 es "no rows found"
-                        throw checkError;
-                    }
-
-                    if (existingTalle) {
-                        alert(`El talle "${talle}" ya existe para este producto. Actualiza el stock directamente.`);
-                    } else {
-                        // Si no existe, lo inserta
-                        const { error: insertError } = await supabase
-                            .from('inventario')
-                            .insert([{ modelo_id: modeloId, talle: talle, stock: stock }]);
-                        
-                        if (insertError) throw insertError;
-                        alert('Talle añadido con éxito!');
-                    }
-                    
-                    loadInventario(); // Recargar el inventario
+                    const { error } = await supabase.from('inventario').delete().eq('id', inventarioId);
+                    if (error) throw error;
+                    alert('Talle y stock eliminados exitosamente.');
+                    loadInventario(); // Recargar la tabla
                 } catch (error) {
-                    alert(`Error al añadir talle: ${error.message}`);
-                    console.error('Error al añadir talle:', error);
-                } finally {
-                    boton.textContent = 'Añadir Talle';
+                    alert('Error al eliminar talle y stock.');
+                    console.error('Error al eliminar talle y stock:', error);
+                    boton.textContent = 'X';
                     boton.disabled = false;
-                }
-            }
-
-
-            // Manejar botón de Eliminar Producto
-            if (e.target.classList.contains('delete-btn')) { 
-                const boton = e.target;
-                const modeloId = boton.dataset.modeloId;
-                const fotoUrl = boton.dataset.fotoUrl; // Nombre de archivo de la foto
-
-                if (confirm('¿Estás seguro de que quieres eliminar este producto (modelo y todo su inventario)?')) {
-                    try {
-                        boton.textContent = '...';
-                        boton.disabled = true;
-
-                        // Primero, eliminar inventario relacionado
-                        const { error: deleteInventarioError } = await supabase.from('inventario').delete().eq('modelo_id', modeloId);
-                        if (deleteInventarioError) throw deleteInventarioError;
-
-                        // Luego, eliminar el modelo
-                        const { error: deleteModeloError } = await supabase.from('modelos').delete().eq('id', modeloId);
-                        if (deleteModeloError) throw deleteModeloError;
-
-                        // Finalmente, eliminar la foto del Storage
-                        if (fotoUrl) {
-                            // Extraer solo el nombre del archivo de la URL pública de Supabase
-                            const fileNameInStorage = fotoUrl; // Ya es solo el nombre del archivo
-                            // Usar el bucket 'fotos-zapatillas' para eliminar
-                            const { error: deleteFotoError } = await supabase.storage.from(STORAGE_BUCKET_NAME).remove([fileNameInStorage]); 
-                            if (deleteFotoError) {
-                                console.warn("Advertencia: No se pudo eliminar la foto del storage.", deleteFotoError);
-                            }
-                        }
-                        
-                        alert('¡Producto eliminado con éxito!');
-                        loadInventario(); // Recargar el inventario
-                    } catch (error) {
-                        alert(`Error al eliminar producto: ${error.message}`);
-                        console.error('Error al eliminar producto:', error);
-                        boton.textContent = 'Eliminar Producto';
-                        boton.disabled = false;
-                    }
                 }
             }
 
             // Manejar botón de Editar Producto (abre el modal)
             if (e.target.classList.contains('edit-btn')) {
                 const modeloId = e.target.dataset.modeloId;
-                abrirModalEdicion(modeloId);
+                await openEditModal(modeloId);
+            }
+
+            // Manejar botón de Eliminar Producto
+            if (e.target.classList.contains('delete-btn')) {
+                const modeloId = e.target.dataset.modeloId;
+                const fotoUrlToDelete = e.target.dataset.fotoUrl; // Obtener el nombre del archivo de la foto
+
+                if (!confirm('¿Estás seguro de que quieres eliminar este producto? Se eliminarán todos sus talles y stock asociados, y su foto.')) {
+                    return;
+                }
+
+                try {
+                    // 1. Eliminar registros de inventario asociados al modelo
+                    const { error: inventarioDeleteError } = await supabase
+                        .from('inventario')
+                        .delete()
+                        .eq('modelo_id', modeloId);
+
+                    if (inventarioDeleteError) throw inventarioDeleteError;
+
+                    // 2. Eliminar el modelo
+                    const { error: modeloDeleteError } = await supabase
+                        .from('modelos')
+                        .delete()
+                        .eq('id', modeloId);
+
+                    if (modeloDeleteError) throw modeloDeleteError;
+
+                    // 3. Eliminar la foto de Supabase Storage (si existe y no es el placeholder)
+                    if (fotoUrlToDelete && !fotoUrlToDelete.includes('placehold.co')) { // Evitar intentar borrar placeholder
+                        const { error: storageDeleteError } = await supabase.storage
+                            .from(STORAGE_BUCKET_NAME)
+                            .remove([fotoUrlToDelete]); // fotoUrlToDelete ya es el filePath
+
+                        if (storageDeleteError) console.warn('Error al eliminar foto del storage:', storageDeleteError.message);
+                    }
+
+                    alert('Producto y sus datos asociados eliminados exitosamente.');
+                    loadInventario(); // Recargar la tabla
+                } catch (error) {
+                    alert('Error al eliminar el producto completo. Consulta la consola para más detalles.');
+                    console.error('Error al eliminar producto completo:', error);
+                }
+            }
+
+            // Manejar botón de Añadir Talle a producto existente
+            if (e.target.classList.contains('add-talle-to-existing-btn')) {
+                const modeloId = e.target.dataset.modeloId;
+                const newTalle = prompt('Introduce el nuevo talle (ej: 42, US 10):');
+                if (newTalle === null || newTalle.trim() === '') {
+                    alert('Operación cancelada o talle inválido.');
+                    return;
+                }
+                const newStock = parseInt(prompt(`Introduce el stock para el talle ${newTalle}:`), 10);
+                if (isNaN(newStock) || newStock < 0) {
+                    alert('Stock inválido. Debe ser un número positivo o cero.');
+                    return;
+                }
+
+                try {
+                    const { error } = await supabase
+                        .from('inventario')
+                        .insert([{
+                            modelo_id: modeloId,
+                            talle: newTalle.trim(),
+                            stock: newStock
+                        }]);
+                    
+                    if (error) throw error;
+                    alert('Nuevo talle añadido exitosamente.');
+                    loadInventario(); // Recargar para ver el nuevo talle
+                } catch (error) {
+                    alert('Error al añadir nuevo talle. Puede que el talle ya exista para este producto.');
+                    console.error('Error al añadir nuevo talle:', error);
+                }
             }
         });
 
-
         // --- Funciones del Modal de Edición ---
-        const editProductModal = document.getElementById('editProductModal'); // Asegúrate de que este elemento exista en tu HTML
-        const closeButtons = document.querySelectorAll('.close-button, .close-button-modal'); // Asegúrate de que estos botones existan
-        const editProductForm = document.getElementById('edit-product-form'); // Asegúrate de que este formulario exista
+        const editProductModal = document.getElementById('editProductModal');
+        const closeButtons = document.querySelectorAll('.close-button, .close-button-modal');
         const editProductIdInput = document.getElementById('edit-product-id');
-        const editCurrentFotoUrlInput = document.getElementById('edit-current-foto-url');
         const editNombreInput = document.getElementById('edit-nombre');
         const editMarcaSelect = document.getElementById('edit-marca');
-        const editCurrentFoto = document.getElementById('edit-current-foto');
         const editFotoInput = document.getElementById('edit-foto');
+        const editCurrentFoto = document.getElementById('edit-current-foto');
+        const editCurrentFotoUrl = document.getElementById('edit-current-foto-url'); // Para guardar la URL actual del archivo
 
-
-        // Función para abrir el modal de edición y cargar datos
-        async function abrirModalEdicion(modeloId) {
-            // Consultar los datos del modelo específico
-            const { data: modelo, error } = await supabase
-                .from('modelos')
-                .select(`id, nombre, foto_url, marca_id, marcas ( nombre )`)
-                .eq('id', modeloId)
-                .single(); // Usa .single() para un solo registro
-
-            if (error || !modelo) {
-                alert('Error al cargar los datos del producto para edición.');
-                console.error('Error al cargar modelo para edición:', error);
-                return;
-            }
-
-            // Rellenar el formulario del modal con los datos del modelo
-            editProductIdInput.value = modelo.id;
-            editCurrentFotoUrlInput.value = modelo.foto_url;
-            editNombreInput.value = modelo.nombre;
-            editMarcaSelect.value = modelo.marca_id; // Selecciona la marca actual
-
-            // Muestra la imagen actual
-            // Construir la URL pública de la foto para el modal de edición
-            // Usamos el nombre del archivo de la DB directamente,
-            // ya que la captura muestra que están en la raíz del bucket 'fotos-zapatillas'.
-            const publicFotoUrl = modelo.foto_url 
-                ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(modelo.foto_url).data.publicUrl
-                : 'https://placehold.co/150x150/cccccc/000000?text=No+Img'; // Fallback si no hay foto_url
-
-            if (publicFotoUrl) {
-                editCurrentFoto.src = publicFotoUrl; 
-                editCurrentFoto.style.display = 'block';
-            } else {
-                editCurrentFoto.src = '';
-                editCurrentFoto.style.display = 'none';
-            }
-            editFotoInput.value = ''; // Limpiar el input de archivo por seguridad
-
-            // Cargar las marcas en el selector del modal
-            try {
-                const { data: marcasData, error: marcasError } = await supabase
-                    .from('marcas')
-                    .select('id, nombre');
-
-                if (marcasError) throw marcasError;
-
-                editMarcaSelect.innerHTML = ''; // Limpiar opciones existentes
-                marcasData.forEach(marca => {
-                    const option = document.createElement('option');
-                    option.value = marca.id;
-                    option.textContent = marca.nombre;
-                    editMarcaSelect.appendChild(option);
-                });
-                editMarcaSelect.value = modelo.marca_id; // Seleccionar la marca actual del modelo
-            } catch (marcasError) {
-                console.error('Error al cargar marcas en el modal de edición:', marcasError.message);
-                // Aquí podrías mostrar un mensaje de error en el modal si lo deseas
-            }
-
-            // Mostrar el modal
-            editProductModal.style.display = 'flex'; // Usamos flex para centrarlo con align-items/justify-content
-        }
-
-        // Eventos para cerrar el modal
         closeButtons.forEach(button => {
             button.addEventListener('click', () => {
                 editProductModal.style.display = 'none';
             });
         });
 
-        // Cerrar modal al hacer clic fuera del contenido
-        window.addEventListener('click', function(event) {
-            if (event.target == editProductModal) {
+        window.addEventListener('click', (event) => {
+            if (event.target === editProductModal) {
                 editProductModal.style.display = 'none';
             }
         });
 
+        async function openEditModal(modeloId) {
+            try {
+                // Cargar marcas en el modal de edición primero
+                await loadMarcasForEditModal();
 
-        // Evento para guardar cambios del producto editado
-        editProductForm.addEventListener('submit', async function(e) {
+                const { data, error } = await supabase
+                    .from('modelos')
+                    .select('id, nombre, marca_id, foto_url')
+                    .eq('id', modeloId)
+                    .single();
+
+                if (error) throw error;
+
+                editProductIdInput.value = data.id;
+                editNombreInput.value = data.nombre;
+                editMarcaSelect.value = data.marca_id;
+                editCurrentFotoUrl.value = data.foto_url; // Guarda el nombre del archivo actual
+
+                // Mostrar la imagen actual
+                const publicFotoUrl = data.foto_url 
+                    ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(data.foto_url).data.publicUrl
+                    : 'https://placehold.co/150x150/cccccc/000000?text=No+Img';
+                editCurrentFoto.src = publicFotoUrl;
+
+                editProductModal.style.display = 'flex'; // Usar flex para centrar el modal
+            } catch (error) {
+                alert('Error al cargar datos del producto para edición.');
+                console.error('Error al cargar producto para edición:', error.message);
+            }
+        }
+
+        async function loadMarcasForEditModal() {
+            try {
+                const { data, error } = await supabase
+                    .from('marcas')
+                    .select('id, nombre');
+
+                if (error) throw error;
+
+                editMarcaSelect.innerHTML = '<option value="">Selecciona una Marca</option>';
+                data.forEach(marca => {
+                    const option = document.createElement('option');
+                    option.value = marca.id;
+                    option.textContent = marca.nombre;
+                    editMarcaSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar marcas para el modal de edición:', error.message);
+                alert('Error al cargar marcas para el formulario de edición.');
+            }
+        }
+
+        document.getElementById('edit-product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const boton = e.target.querySelector('button[type="submit"]');
-            boton.textContent = 'Guardando...';
-            boton.disabled = true;
+
+            const modeloId = editProductIdInput.value;
+            const nuevoNombre = editNombreInput.value.trim();
+            const nuevaMarcaId = editMarcaSelect.value;
+            const nuevaFotoArchivo = editFotoInput.files[0];
+            const currentFotoUrlInDb = editCurrentFotoUrl.value; // Nombre del archivo actual en DB
+
+            if (!nuevoNombre || !nuevaMarcaId) {
+                alert('Por favor, completa todos los campos requeridos.');
+                return;
+            }
 
             try {
-                const modeloId = editProductIdInput.value;
-                const nombre = editNombreInput.value;
-                const marcaId = editMarcaSelect.value;
-                const nuevaFotoFile = editFotoInput.files[0];
-                let fotoUrlToSave = editCurrentFotoUrlInput.value; // Nombre del archivo actual
+                let fotoUrlToSave = currentFotoUrlInDb; // Por defecto, mantener la foto actual
 
-                if (!nombre || !marcaId) {
-                    throw new Error("Por favor, completa todos los campos (nombre y marca).");
-                }
+                if (nuevaFotoArchivo) {
+                    // Subir nueva foto
+                    const filePath = `${Date.now()}-${nuevaFotoArchivo.name.replace(/\s+/g, '-')}`;
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from(STORAGE_BUCKET_NAME)
+                        .upload(filePath, nuevaFotoArchivo);
 
-                // Si hay una nueva foto seleccionada, subirla
-                if (nuevaFotoFile) {
-                    // Extraer solo el nombre del archivo antiguo para eliminarlo si es necesario
-                    const oldFileName = fotoUrlToSave; // Ya es solo el nombre del archivo
-                    
-                    // Eliminar foto antigua si existe (no es la por defecto)
-                    if (oldFileName && oldFileName !== 'default_image.png') { 
-                         // Usar el bucket 'fotos-zapatillas' para eliminar
-                         const { error: deleteOldFotoError } = await supabase.storage.from(STORAGE_BUCKET_NAME).remove([oldFileName]); 
-                         if (deleteOldFotoError) {
-                            console.warn("Advertencia: No se pudo eliminar la foto antigua del storage.", deleteOldFotoError);
-                         }
-                    }
-                    
-                    const cleanFileName = nuevaFotoFile.name.replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
-                    const newFileName = `${Date.now()}-${cleanFileName}`;
-                    // Usar el bucket 'fotos-zapatillas' para subir
-                    const { data: uploadData, error: uploadError } = await supabase.storage.from(STORAGE_BUCKET_NAME).upload(newFileName, nuevaFotoFile); 
                     if (uploadError) throw uploadError;
+                    fotoUrlToSave = filePath; // Actualizar con el nombre del nuevo archivo
 
-                    fotoUrlToSave = newFileName; // Guardar solo el nombre del nuevo archivo en la DB
+                    // Opcional: Eliminar la foto antigua si no es un placeholder
+                    if (currentFotoUrlInDb && !currentFotoUrlInDb.includes('placehold.co')) {
+                        const { error: deleteOldFotoError } = await supabase.storage
+                            .from(STORAGE_BUCKET_NAME)
+                            .remove([currentFotoUrlInDb]);
+                        if (deleteOldFotoError) console.warn('Error al eliminar la foto antigua:', deleteOldFotoError.message);
+                    }
                 }
 
-                // Actualizar el modelo en la tabla 'modelos'
+                // Actualizar el modelo en la base de datos
                 const { error: updateError } = await supabase
                     .from('modelos')
-                    .update({ nombre, foto_url: fotoUrlToSave, marca_id: marcaId })
+                    .update({
+                        nombre: nuevoNombre,
+                        marca_id: nuevaMarcaId,
+                        foto_url: fotoUrlToSave // Guardar el nuevo nombre de archivo o el existente
+                    })
                     .eq('id', modeloId);
-                
+
                 if (updateError) throw updateError;
-                
-                alert('¡Producto actualizado con éxito!');
-                editProductModal.style.display = 'none'; // Cerrar el modal
-                loadInventario(); // Recargar el inventario para ver los cambios
-                
+
+                alert('Producto actualizado exitosamente.');
+                editProductModal.style.display = 'none'; // Cerrar modal
+                loadInventario(); // Recargar el inventario
             } catch (error) {
-                alert(`Error al actualizar el producto: ${error.message}`);
-                console.error('Error al actualizar producto:', error);
-            } finally {
-                boton.textContent = 'Guardar Cambios';
-                boton.disabled = false;
+                alert('Error al guardar cambios en el producto.');
+                console.error('Error al guardar cambios:', error.message);
             }
         });
 
-        // --- Inicialización al cargar la página ---
-        // Verificar si ya hay una sesión activa de Supabase
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                authSection.style.display = 'none';
-                productManagementSection.style.display = 'block';
-                loadInitialData(); // Cargar datos si el usuario ya está logueado
-            } else {
-                authSection.style.display = 'block';
-                productManagementSection.style.display = 'none';
-            }
-        });
 
-        // Escuchar cambios de autenticación de Supabase (ej. si el usuario cierra sesión)
+        // Cargar el estado de autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', handleAuth);
+        
+        // Escucha cambios en el estado de autenticación de Supabase
         supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_OUT') {
-                authSection.style.display = 'block';
-                productManagementSection.style.display = 'none';
-            } else if (event === 'SIGNED_IN') {
-                 authSection.style.display = 'none';
-                 productManagementSection.style.display = 'block';
-                 loadInitialData(); // Cargar datos si se acaba de iniciar sesión
-            }
+            handleAuth();
         });
     </script>
 </body>
