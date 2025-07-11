@@ -1,219 +1,172 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo de Productos - StreetZapato</title>
-    <!-- Incluye Supabase JS SDK desde un CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Incluye Tailwind CSS desde un CDN para estilos rápidos y responsivos -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Puedes añadir estilos personalizados aquí si lo deseas, aunque Tailwind ya cubre mucho */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Estilo para la imagen de placeholder si no carga */
-        img[src="https://placehold.co/150x150/cccccc/000000?text=No+Img"] {
-            border: 1px dashed #ccc;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Catálogo de Productos - StreetZapato</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    img[src="https://placehold.co/150x150/cccccc/000000?text=No+Img"] {
+      border: 1px dashed #ccc;
+    }
+  </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
-    <header class="bg-gray-800 shadow-lg py-4 px-6">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-yellow-400">StreetZapato</h1>
-            <nav>
-                <ul class="flex space-x-4">
-                    <li><a href="#" class="text-gray-300 hover:text-yellow-400 transition duration-300">Inicio</a></li>
-                    <li><a href="#" class="text-gray-300 hover:text-yellow-400 transition duration-300">Productos</a></li>
-                    <li><a href="#" class="text-gray-300 hover:text-yellow-400 transition duration-300">Contacto</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+  <header class="bg-gray-800 shadow-lg py-4 px-6">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-yellow-400">StreetZapato</h1>
+      <nav>
+        <ul class="flex space-x-4">
+          <li><a href="#" class="text-gray-300 hover:text-yellow-400">Inicio</a></li>
+          <li><a href="#" class="text-gray-300 hover:text-yellow-400">Productos</a></li>
+          <li><a href="#" class="text-gray-300 hover:text-yellow-400">Contacto</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
 
-    <main class="container mx-auto p-6 flex-grow">
-        <h2 class="text-4xl font-extrabold text-center text-yellow-400 mb-10">Nuestro Catálogo</h2>
+  <main class="container mx-auto p-6 flex-grow">
+    <h2 class="text-4xl font-extrabold text-center text-yellow-400 mb-10">Nuestro Catálogo</h2>
 
-        <!-- Sección de Filtros -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-md mb-8 flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <label for="talle-filter" class="text-lg font-semibold text-gray-200">Filtrar por Talle:</label>
-            <input type="text" id="talle-filter" placeholder="Ej: 10 us o solo 10" class="p-3 rounded-md bg-gray-700 border border-gray-600 text-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 w-full sm:w-40">
-            <button id="apply-filter-button" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-md transition duration-300 shadow-lg">Aplicar Filtro</button>
-            <button id="clear-filter-button" class="bg-gray-600 hover:bg-gray-700 text-gray-100 font-bold py-3 px-6 rounded-md transition duration-300 shadow-lg">Limpiar Filtro</button>
-        </div>
+    <!-- Filtros -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-md mb-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+      <label for="talle-filter" class="text-lg font-semibold">Filtrar por Talle:</label>
+      <input type="text" id="talle-filter" placeholder="Ej: 10 us o solo 10"
+        class="p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-yellow-500 w-full sm:w-40">
+      <button id="apply-filter-button"
+        class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-md shadow-lg">Aplicar Filtro</button>
+      <button id="clear-filter-button"
+        class="bg-gray-600 hover:bg-gray-700 text-gray-100 font-bold py-3 px-6 rounded-md shadow-lg">Limpiar Filtro</button>
+    </div>
 
-        <!-- Contenedor de Productos -->
-        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Los productos se cargarán aquí -->
-            <p class="col-span-full text-center text-gray-400 text-xl" id="loading-message">Cargando productos...</p>
-            <p class="col-span-full text-center text-red-500 text-xl hidden" id="error-message">Error al cargar los productos.</p>
-            <p class="col-span-full text-center text-gray-400 text-xl hidden" id="no-results-message">No se encontraron productos con ese talle.</p>
-        </div>
-    </main>
+    <!-- Lista de productos -->
+    <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <p class="col-span-full text-center text-gray-400 text-xl" id="loading-message">Cargando productos...</p>
+      <p class="col-span-full text-center text-red-500 text-xl hidden" id="error-message">Error al cargar los productos.</p>
+      <p class="col-span-full text-center text-gray-400 text-xl hidden" id="no-results-message">No se encontraron productos con ese talle.</p>
+    </div>
+  </main>
 
-    <footer class="bg-gray-800 shadow-inner py-6 px-6 mt-10">
-        <div class="container mx-auto text-center text-gray-400">
-            <p>&copy; 2024 StreetZapato. Todos los derechos reservados.</p>
-            <p>REALIZADO POR INNOA, 3886865482</p> <!-- Línea de crédito añadida -->
-        </div>
-    </footer>
+  <footer class="bg-gray-800 shadow-inner py-6 px-6 mt-10">
+    <div class="container mx-auto text-center text-gray-400">
+      <p>&copy; 2024 StreetZapato. Todos los derechos reservados.</p>
+      <p>REALIZADO POR INNOA, 3886865482</p>
+    </div>
+  </footer>
 
-    <script>
-        // ** TUS CREDENCIALES DE SUPABASE **
-        const supabaseUrl = 'https://ilauxmesrvylqtluidpv.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
+  <script>
+    const supabaseUrl = 'https://ilauxmesrvylqtluidpv.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYXV4bWVzcnZ5bHF0bHVpZHB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MjI2NzMsImV4cCI6MjA2NjE5ODY3M30.tDYyt5FaZu4daZ6f7_dZnOlFRMEtlE7gs_pcQYRAP0Y';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Crea la instancia de Supabase usando el objeto global 'supabase' del CDN
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const STORAGE_BUCKET_NAME = 'fotos-zapatillas';
+    const productListDiv = document.getElementById('product-list');
+    const loadingMessage = document.getElementById('loading-message');
+    const errorMessage = document.getElementById('error-message');
+    const noResultsMessage = document.getElementById('no-results-message');
+    const talleFilterInput = document.getElementById('talle-filter');
+    const applyFilterButton = document.getElementById('apply-filter-button');
+    const clearFilterButton = document.getElementById('clear-filter-button');
 
-        // --- Elementos del DOM ---
-        const productListDiv = document.getElementById('product-list');
-        const loadingMessage = document.getElementById('loading-message');
-        const errorMessage = document.getElementById('error-message');
-        const noResultsMessage = document.getElementById('no-results-message');
-        const talleFilterInput = document.getElementById('talle-filter');
-        const applyFilterButton = document.getElementById('apply-filter-button');
-        const clearFilterButton = document.getElementById('clear-filter-button');
+    async function loadProducts(filterTalle = null) {
+      loadingMessage.classList.remove('hidden');
+      errorMessage.classList.add('hidden');
+      noResultsMessage.classList.add('hidden');
+      productListDiv.innerHTML = '';
 
-        // Nombre del bucket de Storage para las fotos
-        const STORAGE_BUCKET_NAME = 'fotos-zapatillas'; 
+      try {
+        let query = supabase
+          .from('inventario')
+          .select(`
+            id,
+            talle,
+            stock,
+            modelos (
+              id,
+              nombre,
+              foto_url,
+              marcas ( nombre )
+            )
+          `);
 
-        /**
-         * Fetches and displays products from Supabase.
-         * @param {string|null} filterTalle - Optional talle (as text) to filter by.
-         */
-        async function loadProducts(filterTalle = null) {
-            loadingMessage.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
-            noResultsMessage.classList.add('hidden');
-            productListDiv.innerHTML = ''; // Clear previous products
-
-            try {
-                let query = supabase
-                    .from('inventario')
-                    // CAMBIO CLAVE: Aseguramos que 'modelos' y 'marcas' se seleccionen correctamente
-                    // y que el alias 'nombre' de marcas esté disponible
-                    .select(`
-                        id,
-                        talle,
-                        stock,
-                        modelos (
-                            id,
-                            nombre,
-                            foto_url,
-                            marcas ( nombre )
-                        )
-                    `);
-
-                // CAMBIO CLAVE: Aseguramos que filterTalle sea una cadena antes de intentar trim()
-                const trimmedFilterTalle = filterTalle === null ? '' : String(filterTalle).trim();
-
-                // Apply filter if a talle is provided and is not empty
-                if (trimmedFilterTalle !== '') {
-                    // Usamos .ilike para coincidencia parcial e insensible a mayúsculas/minúsculas
-                    // El filtro buscará el texto ingresado en cualquier parte del campo 'talle'
-                    query = query.ilike('talle', `%${trimmedFilterTalle}%`); 
-                }
-
-                const { data, error } = await query;
-
-                if (error) throw error;
-
-                loadingMessage.classList.add('hidden');
-
-                if (data.length === 0) {
-                    noResultsMessage.classList.remove('hidden');
-                    return;
-                }
-
-                // Group inventory by model to display talles and stock for each product
-                const productsGroupedByModel = {};
-                data.forEach(item => {
-                    // CAMBIO CLAVE: Verificar si item.modelos existe antes de acceder a sus propiedades
-                    if (!item.modelos) {
-                        console.warn(`Registro de inventario con ID ${item.id} no tiene modelo asociado o no se pudo cargar.`);
-                        return; // Saltar este item si no tiene modelo
-                    }
-
-                    const modeloId = item.modelos.id;
-                    if (!productsGroupedByModel[modeloId]) {
-                        productsGroupedByModel[modeloId] = {
-                            id: modeloId,
-                            nombre: item.modelos.nombre,
-                            foto_url: item.modelos.foto_url,
-                            // CAMBIO CLAVE: Verificar si item.modelos.marcas existe antes de acceder a 'nombre'
-                            marca_nombre: item.modelos.marcas ? item.modelos.marcas.nombre : 'Desconocida',
-                            talles: []
-                        };
-                    }
-                    productsGroupedByModel[modeloId].talles.push({
-                        talle: item.talle,
-                        stock: item.stock
-                    });
-                });
-
-                // Render each unique product (model)
-                for (const modeloId in productsGroupedByModel) {
-                    const product = productsGroupedByModel[modeloId];
-                    
-                    // Construir la URL pública de la foto.
-                    // Ahora, simplemente usamos el nombre del archivo de la DB directamente,
-                    // ya que la captura muestra que están en la raíz del bucket.
-                    const publicFotoUrl = product.foto_url 
-                        ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(product.foto_url).data.publicUrl
-                        : 'https://placehold.co/400x300/cccccc/000000?text=No+Img'; // Fallback si no hay foto_url
-
-                    const productCard = document.createElement('div');
-                    productCard.className = 'bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition duration-500 hover:scale-105';
-                    productCard.innerHTML = `
-                        <img src="${publicFotoUrl}" alt="${product.nombre}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x300/cccccc/000000?text=No+Img';">
-                        <div class="p-6">
-                            <h3 class="text-2xl font-semibold text-yellow-400 mb-2">${product.nombre}</h3>
-                            <p class="text-gray-400 text-sm mb-4">${product.marca_nombre}</p>
-                            <div class="flex flex-wrap gap-2 mb-4">
-                                ${product.talles.sort((a, b) => {
-                                    // Intenta convertir a número para ordenar si es posible, si no, ordena como string
-                                    const talleA = parseFloat(String(a.talle).replace(/[^0-9.]/g, ''));
-                                    const talleB = parseFloat(String(b.talle).replace(/[^0-9.]/g, ''));
-                                    if (!isNaN(talleA) && !isNaN(talleB)) {
-                                        return talleA - talleB;
-                                    }
-                                    return String(a.talle).localeCompare(String(b.talle));
-                                }).map(t => `
-                                    <span class="bg-gray-700 text-gray-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        Talle ${t.talle} (${t.stock} unid.)
-                                    </span>
-                                `).join('')}
-                            </div>
-                            <button class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-300">Ver Detalles</button>
-                        </div>
-                    `;
-                    productListDiv.appendChild(productCard);
-                }
-
-            } catch (error) {
-                console.error('Error al cargar productos:', error.message);
-                loadingMessage.classList.add('hidden');
-                errorMessage.classList.remove('hidden');
-                errorMessage.textContent = `Error al cargar productos: ${error.message}`;
-            }
+        const trimmedFilterTalle = filterTalle === null ? '' : String(filterTalle).trim();
+        if (trimmedFilterTalle !== '') {
+          query = query.ilike('talle', `%${trimmedFilterTalle}%`);
         }
 
-        // --- Event Listeners para el filtro ---
-        applyFilterButton.addEventListener('click', () => {
-            const talle = talleFilterInput.value.trim(); // Obtener el valor como texto
-            loadProducts(talle);
+        const { data, error } = await query;
+        if (error) throw error;
+
+        loadingMessage.classList.add('hidden');
+        if (!data || data.length === 0) {
+          noResultsMessage.classList.remove('hidden');
+          return;
+        }
+
+        const productsGrouped = {};
+        data.forEach(item => {
+          if (!item.modelos) return;
+          const modeloId = item.modelos.id;
+          if (!productsGrouped[modeloId]) {
+            productsGrouped[modeloId] = {
+              id: modeloId,
+              nombre: item.modelos.nombre,
+              foto_url: item.modelos.foto_url,
+              marca_nombre: item.modelos.marcas ? item.modelos.marcas.nombre : 'Sin Marca',
+              talles: []
+            };
+          }
+          productsGrouped[modeloId].talles.push({ talle: item.talle, stock: item.stock });
         });
 
-        clearFilterButton.addEventListener('click', () => {
-            talleFilterInput.value = ''; // Clear the input
-            loadProducts(); // Load all products
-        });
+        for (const modeloId in productsGrouped) {
+          const product = productsGrouped[modeloId];
+          const publicFotoUrl = product.foto_url
+            ? supabase.storage.from(STORAGE_BUCKET_NAME).getPublicUrl(product.foto_url).data.publicUrl
+            : 'https://placehold.co/400x300/cccccc/000000?text=No+Img';
 
-        // Cargar productos al iniciar la página
-        document.addEventListener('DOMContentLoaded', loadProducts);
-    </script>
+          const card = document.createElement('div');
+          card.className = 'bg-gray-800 rounded-lg shadow-lg overflow-hidden transform transition duration-500 hover:scale-105';
+          card.innerHTML = `
+            <img src="${publicFotoUrl}" alt="${product.nombre}" class="w-full h-48 object-cover"
+              onerror="this.onerror=null;this.src='https://placehold.co/400x300/cccccc/000000?text=No+Img';">
+            <div class="p-6">
+              <h3 class="text-2xl font-semibold text-yellow-400 mb-2">${product.nombre}</h3>
+              <p class="text-gray-400 text-sm mb-4">${product.marca_nombre}</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                ${product.talles.sort((a, b) => parseFloat(a.talle) - parseFloat(b.talle)).map(t => `
+                  <span class="bg-gray-700 text-gray-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    Talle ${t.talle} (${t.stock} unid.)
+                  </span>
+                `).join('')}
+              </div>
+              <button class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-300">Ver Detalles</button>
+            </div>
+          `;
+          productListDiv.appendChild(card);
+        }
+
+      } catch (error) {
+        console.error('Error al cargar productos:', error.message);
+        loadingMessage.classList.add('hidden');
+        errorMessage.classList.remove('hidden');
+        errorMessage.textContent = `Error al cargar productos: ${error.message}`;
+      }
+    }
+
+    applyFilterButton.addEventListener('click', () => {
+      const talle = talleFilterInput.value.trim();
+      loadProducts(talle);
+    });
+
+    clearFilterButton.addEventListener('click', () => {
+      talleFilterInput.value = '';
+      loadProducts();
+    });
+
+    document.addEventListener('DOMContentLoaded', loadProducts);
+  </script>
 </body>
 </html>
